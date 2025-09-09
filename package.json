@@ -1,0 +1,57 @@
+{
+  "name": "@tenderlift/zefix-api-client",
+  "version": "0.0.34",
+  "description": "Zero-dependency, edge-compatible TypeScript client for ZEFIX Swiss Business Registry API",
+  "type": "module",
+  "sideEffects": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tenderlift/tenderlift.git",
+    "directory": "packages/zefix-api-client"
+  },
+  "author": "Tenderlift",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "gen": "openapi-ts -f openapi-ts.config.ts",
+    "postgen": "node scripts/validate-generated.cjs",
+    "build": "tsup",
+    "postbuild": "node scripts/verify-bundle.cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm test:worker && pnpm test:node",
+    "test:worker": "vitest run --config vitest.config.ts",
+    "test:node": "vitest run --config vitest.config.node.ts",
+    "prepublishOnly": "pnpm typecheck && pnpm build"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.61",
+    "@cloudflare/workers-types": "^4.20250809.0",
+    "@hey-api/client-fetch": "^0.13.1",
+    "@hey-api/openapi-ts": "^0.80.7",
+    "@types/node": "^20.17.14",
+    "tsup": "^8.5.0",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@9",
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": false
+}
