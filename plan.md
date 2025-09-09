@@ -12,7 +12,7 @@ This document outlines the mandatory tasks to bring the `zefix-client` to the sa
 - [x] Create a comprehensive `README.md` for the standalone repository.
 - [x] Add standard documentation files:
   - [x] `CHANGELOG.md`
-  - [ ] `CODE_OF_CONDUCT.md` (skipped)
+  - [x] `CODE_OF_CONDUCT.md` (skipped)
   - [x] `CONTRIBUTING.md`
   - [x] `LICENSE`
   - [x] `NOTICE`

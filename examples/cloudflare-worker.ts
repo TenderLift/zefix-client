@@ -17,6 +17,15 @@ import {
 } from '../src';
 
 // TypeScript types for Cloudflare Worker environment
+type KVNamespace = {
+	get(key: string): Promise<string | undefined>;
+	put(
+		key: string,
+		value: string,
+		options?: {expirationTtl?: number},
+	): Promise<void>;
+};
+
 type Env = {
 	ZEFIX_USERNAME: string;
 	ZEFIX_PASSWORD: string;
@@ -153,8 +162,14 @@ async function handleCompanyLookup(
 
 	// Fetch from ZEFIX API
 	try {
-		const result = await getCompanyByUid({uid});
-		const company = await ensureOk(result);
+		const result = await getCompanyByUid({path: {id: uid}});
+		const companies = await ensureOk(result);
+		const company = companies[0];
+
+		if (!company) {
+			// eslint-disable-next-line @typescript-eslint/only-throw-error
+			throw new ZefixError('Company not found', 404);
+		}
 
 		// Add metadata
 		const response = {
@@ -197,7 +212,7 @@ async function handleCompanyLookup(
 			);
 		}
 
-		throw error;
+		throw new Error(String(error));
 	}
 }
 
@@ -231,21 +246,19 @@ async function handleCompanySearch(
 				name: searchParams.name,
 				canton: searchParams.canton,
 				activeOnly: searchParams.activeOnly ?? true,
-				offset: searchParams.offset ?? 0,
-				maxEntries: Math.min(searchParams.limit ?? 20, 100), // Max 100 per request
 			},
 		});
 
-		const data = await ensureOk(result);
+		const companies = await ensureOk(result);
 
 		// Enhance response with metadata
 		const response = {
-			...data,
+			companies,
 			_metadata: {
 				query: searchParams.name,
-				totalResults: data.totalCount || 0,
-				returnedResults: data.companies?.length || 0,
-				hasMore: (data.companies?.length || 0) === (searchParams.limit || 20),
+				totalResults: companies.length,
+				returnedResults: companies.length,
+				hasMore: false, // API doesn't support pagination
 			},
 		};
 
@@ -256,7 +269,7 @@ async function handleCompanySearch(
 			},
 		});
 	} catch (error) {
-		throw error;
+		throw new Error(String(error));
 	}
 }
 
@@ -271,8 +284,8 @@ async function handleReferenceData(
 		let data: any;
 
 		if (type === 'cantons') {
-			const {getCantons} = await import('../src');
-			const result = await getCantons();
+			const {getCommunities} = await import('../src');
+			const result = await getCommunities();
 			data = await ensureOk(result);
 		} else {
 			const {getLegalForms} = await import('../src');
@@ -288,7 +301,7 @@ async function handleReferenceData(
 			},
 		});
 	} catch (error) {
-		throw error;
+		throw new Error(String(error));
 	}
 }
 

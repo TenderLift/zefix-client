@@ -19,6 +19,7 @@ export {
 // Utility exports
 export {toBase64} from './utils/node-or-worker';
 export * from './utils/type-guards';
+export {ZefixError, ensureOk} from './utils/errors';
 
 export type {Auth, ClientConfig} from './client';
 export type * from './generated/types.gen';

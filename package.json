@@ -42,6 +42,10 @@
     "NOTICE",
     "CHANGELOG.md"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -57,7 +61,10 @@
     "size": "size-limit",
     "analyze": "pnpm build && size-limit --why",
     "prepare": "lefthook install",
-    "prepublishOnly": "pnpm typecheck && pnpm build"
+    "prepublishOnly": "pnpm typecheck && pnpm build",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish"
   },
   "tsd": {
     "directory": "test"
@@ -85,8 +92,5 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "pnpm@10.14.0",
-  "publishConfig": {
-    "access": "public"
-  }
+  "packageManager": "pnpm@10.14.0"
 }

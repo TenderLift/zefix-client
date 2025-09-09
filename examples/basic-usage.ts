@@ -6,18 +6,19 @@
  */
 
 import {
+	type CompanyShort,
 	configureClient,
-	searchCompanies,
-	getCompanyByUid,
-	getLegalForms,
-	getCantons,
 	ensureOk,
-	ZefixError,
-	isCompany,
-	isActiveCompany,
 	formatUid,
-	isValidUid,
+	getCommunities,
+	getCompanyByUid,
 	getDefaultLanguageForCanton,
+	getLegalForms,
+	isActiveCompany,
+	isCompany,
+	isValidUid,
+	searchCompanies,
+	ZefixError,
 } from '../src';
 
 // Get credentials from environment variables
@@ -57,8 +58,8 @@ async function basicSearch() {
 
 		const data = await ensureOk(result);
 
-		console.log(`Found ${data.companies?.length || 0} companies:`);
-		data.companies?.forEach((company) => {
+		console.log(`Found ${data.length || 0} companies:`);
+		data.forEach((company) => {
 			if (isCompany(company)) {
 				console.log(`- ${company.name} (${formatUid(company.uid || '')})`);
 			}
@@ -94,12 +95,13 @@ async function companyLookup() {
 
 	try {
 		const result = await getCompanyByUid({
-			uid,
+			path: {id: uid},
 		});
 
-		const company = await ensureOk(result);
+		const companies = await ensureOk(result);
+		const company = companies[0];
 
-		if (isCompany(company)) {
+		if (company && isCompany(company)) {
 			console.log('Company Details:');
 			console.log(`- Name: ${company.name}`);
 			console.log(`- UID: ${formatUid(company.uid || '')}`);
@@ -107,9 +109,9 @@ async function companyLookup() {
 			console.log(`- Status: ${company.status}`);
 			console.log(`- Active: ${isActiveCompany(company) ? 'Yes' : 'No'}`);
 
-			if (company.address) {
+			if ('address' in company && company.address) {
 				console.log(
-					`- Address: ${company.address.street}, ${company.address.zipCode} ${company.address.city}`,
+					`- Address: ${company.address.street}, ${company.address.swissZipCode} ${company.address.city}`,
 				);
 			}
 		}
@@ -145,12 +147,14 @@ async function multiLanguageExample() {
 	for (const lang of languages) {
 		try {
 			const result = await getCompanyByUid({
-				uid,
-				languageKey: lang,
+				path: {id: uid},
 			});
 
-			const company = await ensureOk(result);
-			console.log(`Company name in ${lang}: ${company.name}`);
+			const companies = await ensureOk(result);
+			const company = companies[0];
+			if (company) {
+				console.log(`Company name in ${lang}: ${company.name}`);
+			}
 		} catch (error) {
 			console.error(`Failed to fetch in ${lang}:`, error);
 		}
@@ -171,50 +175,38 @@ async function paginationExample() {
 		throttle: {minIntervalMs: 1000}, // Respect rate limits
 	});
 
-	const allCompanies = [];
-	let offset = 0;
-	const limit = 20;
+	const allCompanies: CompanyShort[] = [];
 	const searchTerm = 'Bank*';
 
 	console.log(`Searching for companies matching "${searchTerm}"...`);
+	console.log('Note: ZEFIX API does not support pagination with offset');
 
-	while (true) {
-		try {
-			const result = await searchCompanies({
-				body: {
-					name: searchTerm,
-					activeOnly: true,
-					offset,
-					maxEntries: limit,
-				},
-			});
+	try {
+		const result = await searchCompanies({
+			body: {
+				name: searchTerm,
+				activeOnly: true,
+			},
+		});
 
-			const data = await ensureOk(result);
+		const companies = await ensureOk(result);
 
-			if (!data.companies || data.companies.length === 0) {
-				break;
+		if (companies && companies.length > 0) {
+			allCompanies.push(...companies);
+			console.log(`Fetched ${companies.length} companies`);
+
+			// Show first 10 companies as example
+			const displayCount = Math.min(10, companies.length);
+			console.log(`\nShowing first ${displayCount} companies:`);
+			for (let i = 0; i < displayCount; i++) {
+				const company = companies[i];
+				console.log(`${i + 1}. ${company.name} (${company.uid})`);
 			}
-
-			allCompanies.push(...data.companies);
-			console.log(
-				`Fetched ${data.companies.length} companies (total: ${allCompanies.length})`,
-			);
-
-			if (data.companies.length < limit) {
-				break; // No more results
-			}
-
-			offset += limit;
-
-			// Stop after 100 companies for this example
-			if (allCompanies.length >= 100) {
-				console.log('Stopping at 100 companies for this example');
-				break;
-			}
-		} catch (error) {
-			console.error('Error during pagination:', error);
-			break;
+		} else {
+			console.log('No companies found');
 		}
+	} catch (error) {
+		console.error('Error during search:', error);
 	}
 
 	console.log(`\nTotal companies found: ${allCompanies.length}`);
@@ -245,15 +237,18 @@ async function referenceDataExample() {
 		console.log(`... and ${Math.max(0, legalForms.length - 5)} more`);
 
 		// Fetch cantons
-		const cantonsResult = await getCantons();
+		const cantonsResult = await getCommunities();
 		const cantons = await ensureOk(cantonsResult);
 
-		console.log('\nSwiss Cantons:');
-		cantons.forEach((canton) => {
-			const defaultLang = getDefaultLanguageForCanton(canton.code);
-			console.log(
-				`- ${canton.code}: ${canton.name} (default language: ${defaultLang})`,
-			);
+		console.log('\nSwiss Communities:');
+		cantons.forEach((community) => {
+			if (community.canton) {
+				// @ts-expect-error Canton from API might not match our enum
+				const defaultLang = getDefaultLanguageForCanton(community.canton);
+				console.log(
+					`- ${community.canton}: ${community.name} (BFS: ${community.bfsId}, default language: ${defaultLang})`,
+				);
+			}
 		});
 	} catch (error) {
 		console.error('Error fetching reference data:', error);
@@ -286,9 +281,11 @@ async function rateLimitingExample() {
 
 	for (const uid of uids) {
 		try {
-			const result = await getCompanyByUid({uid});
-			const company = await ensureOk(result);
-			console.log(`✓ Fetched: ${company.name}`);
+			const result = await getCompanyByUid({path: {id: uid}});
+			const companies = await ensureOk(result);
+			if (companies.length > 0) {
+				console.log(`✓ Fetched: ${companies[0].name}`);
+			}
 		} catch (error) {
 			console.error(`✗ Failed to fetch ${uid}:`, error);
 		}
@@ -332,6 +329,6 @@ export {
 	companyLookup,
 	multiLanguageExample,
 	paginationExample,
-	referenceDataExample,
 	rateLimitingExample,
+	referenceDataExample,
 };

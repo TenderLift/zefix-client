@@ -2,11 +2,12 @@ import {client} from './generated/client.gen';
 import type {Config as GeneratedClientConfig} from './generated/client/types.gen';
 import {toBase64} from './utils/node-or-worker';
 import {
-	byBfsCommunityId as getCantonsSdk,
+	byBfsCommunityId as getRegistryByBfsCommunityIdSdk,
 	showChid as getCompanyByChidSdk,
 	showEhraid as getCompanyByEhraidSdk,
 	showUid as getCompanyByUidSdk,
-	list2 as getLegalFormsSdk,
+	list1 as getLegalFormsSdk,
+	list2 as getCommunitiesSdk,
 	byDate as getSogcByDateSdk,
 	get as getSogcPublicationsSdk,
 	search as searchCompaniesSdk,
@@ -76,7 +77,8 @@ export class ZefixApiClient {
 		});
 	}
 
-	public getCantons = getCantonsSdk;
+	public getRegistryByBfsCommunityId = getRegistryByBfsCommunityIdSdk;
+	public getCommunities = getCommunitiesSdk;
 	public getCompanyByChid = getCompanyByChidSdk;
 	public getCompanyByEhraid = getCompanyByEhraidSdk;
 	public getCompanyByUid = getCompanyByUidSdk;
