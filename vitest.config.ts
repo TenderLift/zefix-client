@@ -1,15 +1,11 @@
-import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config';
+import { defineConfig } from 'vitest/config';
 
-export default defineWorkersConfig({
+export default defineConfig({
   test: {
-    poolOptions: {
-      workers: {
-        miniflare: {
-          compatibilityDate: '2024-01-01',
-          compatibilityFlags: ['nodejs_compat'],
-        },
-      },
+    include: ['test/*.test.ts'],
+    exclude: ['test/worker.test.ts'],
+    coverage: {
+      reporter: ['text', 'json', 'html'],
     },
-    include: ['test/*.worker.test.ts'],
   },
 });
