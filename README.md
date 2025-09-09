@@ -1,6 +1,23 @@
 # @tenderlift/zefix-client
 
+[![npm version](https://img.shields.io/npm/v/@tenderlift/zefix-client.svg)](https://www.npmjs.com/package/@tenderlift/zefix-client)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@tenderlift/zefix-client)](https://bundlephobia.com/package/@tenderlift/zefix-client)
+
 TypeScript client for the ZEFIX (Swiss Business Registry) API, auto-generated from [the official OpenAPI specification](https://www.zefix.admin.ch/ZefixPublicREST/v3/api-docs).
+
+> ⚠️ **Non-affiliation Notice**: This is an unofficial, open-source library for the ZEFIX API. It is developed and maintained independently by TenderLift and is not affiliated with, endorsed by, or connected to ZEFIX or the Swiss Federal Commercial Registry Office. For official information, visit [zefix.ch](https://www.zefix.ch).
+
+## Features
+
+- **Full TypeScript support** with comprehensive type definitions
+- **Multi-runtime compatible**: Node.js 20+, Cloudflare Workers, Vercel/Netlify Edge
+- **Lightweight**: <12KB minified with zero runtime dependencies
+- **Auto-generated** from official ZEFIX OpenAPI specification
+- **Built-in error handling** with typed error responses
+- **Authentication helpers** for HTTP Basic Auth
+- **Rate limiting support** with configurable throttling
+- **Multi-language support** (DE, FR, IT, EN)
 
 ## Installation
 
@@ -8,23 +25,13 @@ TypeScript client for the ZEFIX (Swiss Business Registry) API, auto-generated fr
 npm install @tenderlift/zefix-client
 # or
 pnpm add @tenderlift/zefix-client
+# or
+yarn add @tenderlift/zefix-client
 ```
 
-## What works (and what doesn't)
+## Quick Start
 
-- ✅ **Server runtimes**: Node.js 18+, Cloudflare Workers, Vercel/Netlify Edge (Fetch API compatible)
-- ✅ **Authentication**: HTTP Basic Auth support built-in
-- ✅ **Zero dependencies**: Fully bundled (11.88KB), edge-ready
-
-- ❌ **Direct browser usage**: **Not supported** due to CORS restrictions on the ZEFIX API
-
-> If you want to call the API from a browser app, you **must** route requests through your own backend/proxy. This package is designed for server-side use only.
-
-### Why
-
-ZEFIX's API does not include `Access-Control-Allow-Origin` headers, so browsers block cross-origin requests. Server/edge environments are unaffected.
-
-## Quick start (server/edge)
+### Basic Usage (Node.js/Edge)
 
 ```typescript
 import {
@@ -32,6 +39,7 @@ import {
   searchCompanies,
   getCompanyByUid,
   ensureOk,
+  ZefixError
 } from '@tenderlift/zefix-client';
 
 // Configure with your ZEFIX credentials
@@ -48,136 +56,134 @@ const searchResult = await searchCompanies({
   body: {
     name: 'Migros*',
     activeOnly: true,
-    maxEntries: 10,
+    canton: 'ZH',
   },
 });
 
 const companies = await ensureOk(searchResult);
 console.log(`Found ${companies.length} companies`);
 
-// Get company by UID
+// Get company details
 const companyResult = await getCompanyByUid({
-  uid: 'CHE-105.815.381',
-  languageKey: 'en',
+  path: { id: 'CHE-105.815.381' },
 });
 
-const company = await ensureOk(companyResult);
-console.log(company.name);
+const companyDetails = await ensureOk(companyResult);
+console.log(companyDetails[0]?.name);
 ```
 
-## Integration Notes
-
-- Server-only: The official ZEFIX API does not send CORS headers; call it from server/edge and never directly from browsers.
-- Throttling: Respect upstream limits using the built-in `throttle.minIntervalMs` configuration; cache stable responses to reduce calls.
-- Typical use: Enrich companies discovered via LINDAS with legal status, registration, and purpose; avoid bulk calls unless necessary.
-
-## Authentication
-
-ZEFIX API requires HTTP Basic Authentication for all endpoints:
+### Error Handling
 
 ```typescript
-// Set up authentication once
-configureClient({
-  auth: {
-    username: 'your-username',
-    password: 'your-password',
-  },
-});
-
-// Update auth dynamically if needed
-import { setAuth } from '@tenderlift/zefix-client';
-setAuth({ username: 'new-user', password: 'new-pass' });
-```
-
-### Cloudflare Workers
-
-Store credentials securely in Worker secrets:
-
-```bash
-wrangler secret put ZEFIX_USERNAME
-wrangler secret put ZEFIX_PASSWORD
-```
-
-```typescript
-export default {
-  async fetch(request: Request, env: Env) {
-    configureClient({
-      auth: {
-        username: env.ZEFIX_USERNAME,
-        password: env.ZEFIX_PASSWORD,
-      },
-    });
-
-    // Your API calls here
-  },
-};
-```
-
-## Error Handling
-
-```typescript
-import { ZefixError, ensureOk } from '@tenderlift/zefix-client';
+import { ensureOk, ZefixError } from '@tenderlift/zefix-client';
 
 try {
-  const result = await getCompanyByUid({ uid: 'CHE-123.456.789' });
+  const result = await getCompanyByUid({
+    path: { id: 'CHE-123.456.789' },
+  });
   const company = await ensureOk(result);
-  console.log(company.name);
+  console.log(company);
 } catch (error) {
   if (error instanceof ZefixError) {
-    switch (error.status) {
-      case 401:
-        console.error('Invalid credentials');
-        break;
-      case 404:
-        console.error('Company not found');
-        break;
-      case 429:
-        console.error('Rate limit exceeded');
-        break;
-      default:
-        console.error(`API Error ${error.status}: ${error.message}`);
+    console.error(`ZEFIX Error ${error.status}: ${error.message}`);
+    if (error.status === 404) {
+      console.log('Company not found');
     }
   }
 }
 ```
 
-## Type Guards & Helpers
+## Browser Support
 
-```typescript
-import {
-  isCompany,
-  isCompanyFull,
-  isActiveCompany,
-  isValidUid,
-  formatUid,
-  extractErrorMessage,
-} from '@tenderlift/zefix-client';
+❌ **Direct browser usage is not supported** because the ZEFIX API does not send CORS headers.
 
-// Validate UID format
-if (isValidUid('CHE-123.456.789')) {
-  // Valid Swiss UID format
+If you need to use this client in a browser application, you must:
+1. Set up a proxy server (your backend, edge function, or development server)
+2. Route ZEFIX API requests through your proxy
+3. Configure the client to use your proxy URL
+
+Example proxy setup with Vite:
+```javascript
+// vite.config.js
+export default {
+  server: {
+    proxy: {
+      '/api/zefix': {
+        target: 'https://www.zefix.admin.ch',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/zefix/, '/ZefixPublicREST/api/v1'),
+      }
+    }
+  }
 }
-
-// Format UID for display
-const formatted = formatUid('CHE123456789'); // Returns: CHE-123.456.789
-
-// Check if company is active
-if (isActiveCompany(company)) {
-  // Company status is ACTIVE
-}
-
-// Extract error messages safely
-const message = extractErrorMessage(error);
 ```
 
-## Rate Limiting
+## API Documentation
 
-Respect ZEFIX API rate limits with built-in throttling:
+### Available Endpoints
+
+#### Company Operations
+- `searchCompanies(options)` - Search for companies
+- `getCompanyByUid(options)` - Get company details by UID
+- `getCompanyByCHID(options)` - Get company by CHID
+- `getCompanyByEHRAID(options)` - Get company by EHRAID
+
+#### Reference Data
+- `getLegalForms(options)` - Get legal forms
+- `getCommunities(options)` - Get Swiss communities (formerly cantons)
+- `getRegistryOffices(options)` - Get registry offices
+- `getRegistryByBfsCommunityId(options)` - Get registry by BFS ID
+
+#### SOGC Publications
+- `getSogcPublications(options)` - Get Swiss Official Gazette of Commerce publications
+- `getSogcByDate(options)` - Get SOGC publications by date
+
+### Utility Functions
+
+```typescript
+// Validation utilities
+import { isValidUid, formatUid } from '@tenderlift/zefix-client';
+
+console.log(isValidUid('CHE-105.815.381')); // true
+console.log(formatUid('CHE105815381')); // 'CHE-105.815.381'
+
+// Type guards
+import { isCompany, isActiveCompany } from '@tenderlift/zefix-client';
+
+if (isCompany(data) && isActiveCompany(data)) {
+  console.log(`${data.name} is an active company`);
+}
+```
+
+### Language Support
+
+ZEFIX API supports multiple languages (de, fr, it, en):
+
+```typescript
+// Get company info in different languages
+const germanResult = await getCompanyByUid({
+  path: { id: 'CHE-105.815.381' },
+  query: { languageKey: 'de' },
+});
+
+const frenchResult = await getCompanyByUid({
+  path: { id: 'CHE-105.815.381' },
+  query: { languageKey: 'fr' },
+});
+
+// Get language-specific reference data
+const legalForms = await getLegalForms({ query: { languageKey: 'it' } });
+```
+
+### Rate Limiting
+
+Configure automatic request throttling:
 
 ```typescript
 configureClient({
   auth: {
-    /* ... */
+    username: process.env.ZEFIX_USERNAME,
+    password: process.env.ZEFIX_PASSWORD,
   },
   throttle: {
     minIntervalMs: 1000, // Minimum 1 second between requests
@@ -186,102 +192,50 @@ configureClient({
 
 // Requests will be automatically throttled
 for (const uid of companyUids) {
-  const result = await getCompanyByUid({ uid });
+  const result = await getCompanyByUid({ path: { id: uid } });
   // Automatically waits if needed
 }
 ```
 
-## Language Support
-
-ZEFIX API supports multiple languages (de, fr, it, en):
+## Cloudflare Workers Example
 
 ```typescript
-// Get company info in different languages
-const germanResult = await getCompanyByUid({
-  uid: 'CHE-105.815.381',
-  languageKey: 'de',
-});
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    configureClient({
+      auth: {
+        username: env.ZEFIX_USERNAME,
+        password: env.ZEFIX_PASSWORD,
+      },
+    });
 
-const frenchResult = await getCompanyByUid({
-  uid: 'CHE-105.815.381',
-  languageKey: 'fr',
-});
+    const url = new URL(request.url);
+    const uid = url.searchParams.get('uid');
 
-// Get language-specific reference data
-const legalForms = await getLegalForms({ languageKey: 'it' });
-```
+    if (!uid) {
+      return new Response('Missing UID parameter', { status: 400 });
+    }
 
-## Pagination
-
-Handle large result sets with offset and limit:
-
-```typescript
-let offset = 0;
-const limit = 50;
-let hasMore = true;
-
-while (hasMore) {
-  const result = await searchCompanies({
-    body: {
-      name: 'Bank*',
-      activeOnly: true,
-      offset,
-      maxEntries: limit,
-    },
-  });
-
-  const companies = await ensureOk(result);
-
-  // Process companies...
-
-  hasMore = companies.length === limit;
-  offset += limit;
-}
-```
-
-## API Coverage
-
-### Company Operations
-
-- `searchCompanies()` - Search for companies by name, canton, status
-- `getCompanyByUid()` - Get company details by UID
-- `getCompanyByChid()` - Get company by CH-ID
-- `getCompanyByEhraid()` - Get company by EHRA-ID
-
-### Reference Data
-
-- `getLegalForms()` - List all legal forms (AG, GmbH, etc.)
-- `getCantons()` - List all Swiss communities/cantons
-- `getSogcPublications()` - Get SOGC (Swiss Official Gazette) publications
-
-## TypeScript
-
-All request/response models are fully typed, generated from the ZEFIX OpenAPI schema:
-
-```typescript
-import type {
-  CompanyShort,
-  CompanyFull,
-  LegalForm,
-  BfsCommunity,
-} from '@tenderlift/zefix-client';
-```
-
-## Runtime Protection
-
-The client includes browser detection to prevent accidental browser usage:
-
-```typescript
-// This will throw an error in browser environments
-configureClient({
-  /* ... */
-});
-// Error: ZEFIX API Client Error: This client is for server-side use only...
+    try {
+      const result = await getCompanyByUid({ path: { id: uid } });
+      const company = await ensureOk(result);
+      
+      return new Response(JSON.stringify(company), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      if (error instanceof ZefixError && error.status === 404) {
+        return new Response('Company not found', { status: 404 });
+      }
+      return new Response('Internal error', { status: 500 });
+    }
+  },
+};
 ```
 
 ## Compatibility Matrix
 
-- Node.js 18+: ✅
+- Node.js 20+: ✅
 - Cloudflare Workers: ✅
 - Vercel/Netlify Edge: ✅
 - Deno: ✅ (with npm: imports)
@@ -293,20 +247,45 @@ configureClient({
 - Tree-shakeable exports for optimal bundle size
 - Edge-optimized for Cloudflare Workers
 
-## Contributing
+## Development
 
-This is an auto-generated client. To report issues:
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
-1. Check if the issue is with the ZEFIX API itself
-2. For client generation issues, create an issue in this repository
-3. For API issues, contact ZEFIX support
+### Scripts
 
-## Links
+- `pnpm build` - Build the library
+- `pnpm test` - Run all tests
+- `pnpm typecheck` - Type checking
+- `pnpm lint` - Run linter
+- `pnpm size` - Check bundle size
 
-- [ZEFIX Portal](https://www.zefix.ch)
-- [ZEFIX API Documentation](https://www.zefix.admin.ch/ZefixPublicREST/swagger-ui/index.html)
-- [TenderLift](https://tenderlift.ch)
+## Troubleshooting
+
+### Common Issues
+
+#### Authentication Failed
+Ensure your ZEFIX credentials are valid. Contact ZEFIX for API access: [zefix@bj.admin.ch](mailto:zefix@bj.admin.ch)
+
+#### Rate Limiting
+ZEFIX API has rate limits. Use the `throttle` configuration to automatically handle rate limiting.
+
+#### CORS Errors in Browser
+The ZEFIX API does not support CORS. Use a backend proxy or edge function to make API calls.
 
 ## License
 
-MIT
+MIT © [TenderLift](https://github.com/tenderlift)
+
+See [LICENSE](LICENSE) file for details.
+
+## Links
+
+- [NPM Package](https://www.npmjs.com/package/@tenderlift/zefix-client)
+- [GitHub Repository](https://github.com/tenderlift/zefix-client)
+- [Issue Tracker](https://github.com/tenderlift/zefix-client/issues)
+- [ZEFIX Portal](https://www.zefix.ch)
+- [ZEFIX API Documentation](https://www.zefix.admin.ch/ZefixPublicREST/swagger-ui/index.html)
+
+---
+
+Built with ❤️ for the Swiss open-source community
