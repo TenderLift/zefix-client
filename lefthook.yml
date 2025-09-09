@@ -1,0 +1,25 @@
+# Lefthook configuration for git hooks
+# https://github.com/evilmartians/lefthook
+
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.{js,ts,tsx}"
+      run: pnpm xo {staged_files}
+    typecheck:
+      run: pnpm tsc --noEmit
+
+pre-push:
+  parallel: false
+  commands:
+    test:
+      run: pnpm test
+
+commit-msg:
+  commands:
+    validate:
+      run: |
+        # Check commit message format (optional)
+        # You can add commit message validation here if needed
+        exit 0

@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "lib": ["ES2020", "DOM", "WebWorker", "DOM.Iterable"],
-    "types": ["@cloudflare/workers-types"],
+    "lib": ["ES2021", "DOM", "WebWorker", "DOM.Iterable"],
+    "types": ["@cloudflare/workers-types", "node"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

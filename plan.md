@@ -6,29 +6,29 @@ This document outlines the mandatory tasks to bring the `zefix-api-client` to th
 
 - [x] Initialize a new git repository and push to GitHub.
 - [x] Review and update `package.json` for a standalone package.
-  - [ ] **[IN PROGRESS]** Update `name`, `version`, `description`, `author`, `license`, etc.
+  - [x] Update `name`, `version`, `description`, `author`, `license`, etc.
   - [x] Add `repository`, `bugs`, and `homepage` fields.
   - [x] Clean up scripts and dependencies.
-- [ ] Create a comprehensive `README.md` for the standalone repository.
-- [ ] Add standard documentation files:
-  - [ ] `CHANGELOG.md`
-  - [ ] `CODE_OF_CONDUCT.md`
-  - [ ] `CONTRIBUTING.md`
-  - [ ] `LICENSE`
-  - [ ] `NOTICE`
-  - [ ] `SECURITY.md`
+- [x] Create a comprehensive `README.md` for the standalone repository.
+- [x] Add standard documentation files:
+  - [x] `CHANGELOG.md`
+  - [ ] `CODE_OF_CONDUCT.md` (skipped)
+  - [x] `CONTRIBUTING.md`
+  - [x] `LICENSE`
+  - [x] `NOTICE`
+  - [x] `SECURITY.md`
 
 ## Stage 2: Tooling and Configuration
 
-- [ ] Set up `lefthook` for pre-commit hooks (`lefthook.yml`).
-- [ ] Configure `codecov` for test coverage reporting (`codecov.yml`).
+- [x] Set up `lefthook` for pre-commit hooks (`lefthook.yml`).
+- [x] Configure `codecov` for test coverage reporting (`codecov.yml`).
 - [x] Configure `openapi-ts` for OpenAPI schema generation (`openapi-ts.config.ts`).
 - [x] Configure `tsup` for bundling (`tsup.config.ts`).
 - [x] Configure `vitest` for testing (`vitest.config.node.ts`, `vitest.config.ts`).
-- [ ] Configure `xo` for linting (`xo.config.js`).
-- [ ] Set up GitHub Actions for CI/CD (`.github/workflows/`).
-  - [ ] PR checks (linting, testing, building).
-  - [ ] Release workflow.
+- [x] Configure `xo` for linting (`xo.config.js`).
+- [x] Set up GitHub Actions for CI/CD (`.github/workflows/`).
+  - [x] PR checks (linting, testing, building).
+  - [x] Release workflow.
 
 ## Stage 3: Code and Tests
 
@@ -47,31 +47,31 @@ This document outlines the mandatory tasks to bring the `zefix-api-client` to th
 ## Next Steps (Granular)
 
 1.  **Complete `package.json`:**
-    - [ ] Set `name` to `@tenderlift/zefix-client`.
-    - [ ] Set `version` to `0.1.0`.
-    - [ ] Set `private` to `false`.
-    - [ ] Add `publishConfig` with `access: public`.
+    - [x] Set `name` to `@tenderlift/zefix-client`.
+    - [x] Set `version` to `0.1.0`.
+    - [x] Set `private` to `false`.
+    - [x] Add `publishConfig` with `access: public`.
 2.  **Add Legal Documents:**
-    - [ ] Create `LICENSE` file (MIT).
-    - [ ] Create `NOTICE` file.
-    - [ ] Create `CODE_OF_CONDUCT.md`.
-    - [ ] Create `CONTRIBUTING.md`.
-    - [ ] Create `SECURITY.md`.
+    - [x] Create `LICENSE` file (MIT).
+    - [x] Create `NOTICE` file.
+    - [ ] Create `CODE_OF_CONDUCT.md` (skipped).
+    - [x] Create `CONTRIBUTING.md`.
+    - [x] Create `SECURITY.md`.
 3.  **Set up Linting and Formatting:**
-    - [ ] Install `lefthook` and `xo`.
-    - [ ] Configure `xo` in `xo.config.js`.
-    - [ ] Configure `lefthook` in `lefthook.yml` to run `xo` on pre-commit.
+    - [x] Install `lefthook` and `xo`.
+    - [x] Configure `xo` in `xo.config.js`.
+    - [x] Configure `lefthook` in `lefthook.yml` to run `xo` on pre-commit.
 4.  **Create `README.md`:**
-    - [ ] Add badges for build status, coverage, etc.
-    - [ ] Add installation instructions.
-    - [ ] Add usage examples.
-    - [ ] Add API documentation.
+    - [x] Add badges for build status, coverage, etc.
+    - [x] Add installation instructions.
+    - [x] Add usage examples.
+    - [x] Add API documentation.
 5.  **Add Examples:**
-    - [ ] Create `examples/basic-usage.ts`.
-    - [ ] Create `examples/cloudflare-worker.ts`.
+    - [x] Create `examples/basic-usage.ts`.
+    - [x] Create `examples/cloudflare-worker.ts`.
 6.  **Set up CI/CD:**
-    - [ ] Create `.github/workflows/ci.yml` to run linting, testing, and building on PRs.
-    - [ ] Create `.github/workflows/release.yml` to publish to npm on new releases.
+    - [x] Create `.github/workflows/ci.yml` to run linting, testing, and building on PRs.
+    - [x] Create `.github/workflows/release.yml` to publish to npm on new releases.
 
 ## Key Requirements
 
