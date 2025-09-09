@@ -5,7 +5,11 @@ export default defineConfig({
 		name: 'node',
 		environment: 'node',
 		include: ['test/**/*.test.ts', 'test/**/*.e2e.test.ts'],
-		exclude: ['test/**/*.worker.test.ts', 'node_modules/**'],
+		exclude: [
+			'test/worker.test.ts',
+			'test/**/*.worker.test.ts',
+			'node_modules/**',
+		],
 		setupFiles: ['test/vitest.setup.ts'],
 		coverage: {
 			provider: 'v8',

@@ -1,13 +1,13 @@
-# @tenderlift/zefix-api-client
+# @tenderlift/zefix-client
 
 TypeScript client for the ZEFIX (Swiss Business Registry) API, auto-generated from [the official OpenAPI specification](https://www.zefix.admin.ch/ZefixPublicREST/v3/api-docs).
 
 ## Installation
 
 ```bash
-npm install @tenderlift/zefix-api-client
+npm install @tenderlift/zefix-client
 # or
-pnpm add @tenderlift/zefix-api-client
+pnpm add @tenderlift/zefix-client
 ```
 
 ## What works (and what doesn't)
@@ -32,7 +32,7 @@ import {
   searchCompanies,
   getCompanyByUid,
   ensureOk,
-} from '@tenderlift/zefix-api-client';
+} from '@tenderlift/zefix-client';
 
 // Configure with your ZEFIX credentials
 configureClient({
@@ -85,7 +85,7 @@ configureClient({
 });
 
 // Update auth dynamically if needed
-import { setAuth } from '@tenderlift/zefix-api-client';
+import { setAuth } from '@tenderlift/zefix-client';
 setAuth({ username: 'new-user', password: 'new-pass' });
 ```
 
@@ -116,7 +116,7 @@ export default {
 ## Error Handling
 
 ```typescript
-import { ZefixError, ensureOk } from '@tenderlift/zefix-api-client';
+import { ZefixError, ensureOk } from '@tenderlift/zefix-client';
 
 try {
   const result = await getCompanyByUid({ uid: 'CHE-123.456.789' });
@@ -151,7 +151,7 @@ import {
   isValidUid,
   formatUid,
   extractErrorMessage,
-} from '@tenderlift/zefix-api-client';
+} from '@tenderlift/zefix-client';
 
 // Validate UID format
 if (isValidUid('CHE-123.456.789')) {
@@ -264,7 +264,7 @@ import type {
   CompanyFull,
   LegalForm,
   BfsCommunity,
-} from '@tenderlift/zefix-api-client';
+} from '@tenderlift/zefix-client';
 ```
 
 ## Runtime Protection

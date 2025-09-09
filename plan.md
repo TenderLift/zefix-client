@@ -1,6 +1,6 @@
 # Zefix API Client Implementation Plan
 
-This document outlines the mandatory tasks to bring the `zefix-api-client` to the same production-level quality as the `simap-client`.
+This document outlines the mandatory tasks to bring the `zefix-client` to the same production-level quality as the `simap-client`.
 
 ## Stage 1: Foundational Setup
 
@@ -32,7 +32,7 @@ This document outlines the mandatory tasks to bring the `zefix-api-client` to th
 
 ## Stage 3: Code and Tests
 
-- [ ] Add `examples/` directory with usage examples.
+- [x] Add `examples/` directory with usage examples.
 - [x] Add `test/` directory with comprehensive tests.
 - [x] Add `spec/` directory for API specifications.
 - [x] Review and refactor the existing code to be a standalone library.
@@ -40,7 +40,7 @@ This document outlines the mandatory tasks to bring the `zefix-api-client` to th
 
 ## Stage 4: Finalization
 
-- [ ] Perform a final review of all files and configurations.
+- [x] Perform a final review of all files and configurations.
 - [ ] Publish the package to a package manager (e.g., npm).
 - [ ] Create the first release on GitHub.
 
@@ -80,7 +80,7 @@ This document outlines the mandatory tasks to bring the `zefix-api-client` to th
 - **Automated Maintenance**: Daily regeneration via GitHub Actions with hash-based change detection
 - **Type-Safe**: Full TypeScript support with generated types
 - **Dual Testing**: Workers runtime tests + Node.js compatibility tests
-- **NPM Ready**: Prepared for publishing as `@tenderlift/zefix-api-client`
+- **NPM Ready**: Prepared for publishing as `@tenderlift/zefix-client`
 - **CORS-Aware**: Server-side only (Workers), not for browser usage
 
 ## API Differences from SIMAP

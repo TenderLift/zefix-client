@@ -77,7 +77,7 @@ const workerHandler = {
 				return new Response(
 					JSON.stringify({
 						status: 'healthy',
-						service: 'zefix-api-client',
+						service: 'zefix-client',
 						timestamp: new Date().toISOString(),
 					}),
 					{
