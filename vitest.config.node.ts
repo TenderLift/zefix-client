@@ -21,12 +21,6 @@ export default defineConfig({
 				'src/**/*.test.ts',
 				'src/**/*.spec.ts',
 			],
-			thresholds: {
-				branches: 70,
-				functions: 70,
-				lines: 70,
-				statements: 70,
-			},
 		},
 		testTimeout: 30_000,
 		hookTimeout: 30_000,

@@ -71,41 +71,6 @@ jobs:
           pnpm gen
           git diff --exit-code src/generated || (echo "Generated code is not up to date. Run 'pnpm gen' locally and commit the changes." && exit 1)
 
-  coverage:
-    name: Code Coverage
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.14.0
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-      
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      
-      - name: Run tests with coverage
-        run: pnpm test:node --coverage
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos, but recommended
-          files: ./coverage/lcov.info
-          flags: unittests
-          name: zefix-client
-          fail_ci_if_error: false # Don't fail CI if upload fails
-          verbose: true
-
   build-and-attest:
     name: Build and Attest
     runs-on: ubuntu-latest

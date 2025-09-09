@@ -56,6 +56,7 @@
     "test:node": "vitest run -c vitest.config.node.ts",
     "test:workers": "vitest run -c vitest.config.worker.ts",
     "test:e2e": "vitest run -c vitest.config.node.ts test/zefix-api.e2e.test.ts",
+    "test:coverage": "vitest run -c vitest.config.node.ts --coverage",
     "test:types": "tsd",
     "test:watch": "vitest",
     "size": "size-limit",
