@@ -3,11 +3,11 @@
  */
 
 import type {
-	CompanyShort,
-	CompanyFull,
-	RestApiErrorResponse,
-	LegalForm,
 	BfsCommunity,
+	CompanyFull,
+	CompanyShort,
+	LegalForm,
+	RestApiErrorResponse,
 } from '../generated/types.gen';
 
 /**
@@ -99,28 +99,6 @@ export function extractErrorMessage(error: unknown): string {
  */
 export function isActiveCompany(company: CompanyShort | CompanyFull): boolean {
 	return company.status === 'ACTIVE';
-}
-
-/**
- * Format a UID for display
- */
-export function formatUid(uid: string): string {
-	// Ensure format CHE-123.456.789
-	const cleaned = uid.replaceAll(/\D/g, '');
-	if (cleaned.length === 9) {
-		return `CHE-${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6)}`;
-	}
-
-	return uid;
-}
-
-/**
- * Validate a Swiss UID format
- */
-export function isValidUid(uid: string): boolean {
-	// Match CHE-123.456.789 or CHE123456789 format
-	const pattern = /^che[-.]?(?:\d{3}\.?){2}\d{3}$/i;
-	return pattern.test(uid);
 }
 
 /**

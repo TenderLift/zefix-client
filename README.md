@@ -141,12 +141,6 @@ export default {
 ### Utility Functions
 
 ```typescript
-// Validation utilities
-import { isValidUid, formatUid } from '@tenderlift/zefix-client';
-
-console.log(isValidUid('CHE-105.815.381')); // true
-console.log(formatUid('CHE105815381')); // 'CHE-105.815.381'
-
 // Type guards
 import { isCompany, isActiveCompany } from '@tenderlift/zefix-client';
 
@@ -154,6 +148,43 @@ if (isCompany(data) && isActiveCompany(data)) {
   console.log(`${data.name} is an active company`);
 }
 ```
+
+### UID Handling
+
+Swiss UIDs (Unternehmens-Identifikationsnummer) are unique business identifiers formatted as CHE-123.456.789. This package includes zero-dependency utilities for working with UIDs, available as a separate submodule:
+
+```typescript
+// Import as a lightweight submodule (zero dependencies, ~1KB)
+import { normalizeUid, formatUid, isValidUidFormat, uidEquals } from '@tenderlift/zefix-client/uid';
+
+// Normalize various input formats to core format (9 digits)
+normalizeUid('CHE-123.456.789')     // '123456789'
+normalizeUid('che 123 456 789')     // '123456789'
+normalizeUid('CHE-123.456.789 MWST') // '123456789'
+normalizeUid('invalid')              // undefined
+
+// Format for canonical display
+formatUid('123456789')     // 'CHE-123.456.789'
+formatUid('che123456789')  // 'CHE-123.456.789'
+
+// Validate format (structure only, no checksum)
+isValidUidFormat('CHE-123.456.789')  // true
+isValidUidFormat('che 123 456 789 TVA') // true
+isValidUidFormat('invalid')          // false
+
+// Compare UIDs ignoring formatting
+uidEquals('CHE-123.456.789', 'che 123 456 789') // true
+uidEquals('CHE-123.456.789 MWST', 'CHE123456789') // true
+```
+
+**Accepted Input Formats:**
+- Canonical: `CHE-123.456.789`
+- Various separators: `CHE 123 456 789`, `CHE.123.456.789`, `CHE123456789`
+- Case-insensitive: `che-123.456.789`
+- With VAT suffixes: `CHE-123.456.789 MWST`, `CHE-123.456.789 TVA`, `CHE-123.456.789 IVA`
+- Raw digits: `123456789`
+
+**Storage Recommendation:** Store UIDs in their normalized core format (`123456789`) for consistency and efficient database operations. Use `formatUid()` for display purposes.
 
 ### Language Support
 

@@ -1,6 +1,6 @@
 {
   "name": "@tenderlift/zefix-client",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "A zero-dependency, edge-compatible, and type-safe Zefix API client.",
   "private": false,
   "type": "module",
@@ -32,6 +32,18 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./uid": {
+      "types": "./dist/uid.d.ts",
+      "import": "./dist/uid.js",
+      "require": "./dist/uid.cjs"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "uid": [
+        "./dist/uid.d.ts"
+      ]
     }
   },
   "files": [
