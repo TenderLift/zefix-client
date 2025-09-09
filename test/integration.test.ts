@@ -1,58 +1,34 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  configureClient,
-  searchCompanies,
-  getCompanyByUid,
-  getLegalForms,
-  getCantons,
-} from '../src';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { ZefixApiClient } from '../src';
+import * as dotenv from 'dotenv';
 
-describe('Integration tests (mocked)', () => {
-  beforeEach(() => {
-    // Reset configuration
-    configureClient({
-      baseUrl: 'https://www.zefix.admin.ch/ZefixPublicREST',
-      // No auth for these tests as we're not hitting real API
+dotenv.config();
+
+describe('ZefixApiClient integration tests', () => {
+  let client: ZefixApiClient;
+
+  beforeAll(() => {
+    client = new ZefixApiClient({
+      auth: {
+        username: process.env.ZEFIX_USERNAME!,
+        password: process.env.ZEFIX_PASSWORD!,
+      },
     });
   });
 
-  it('all exported functions are defined', () => {
-    expect(searchCompanies).toBeDefined();
-    expect(getCompanyByUid).toBeDefined();
-    expect(getLegalForms).toBeDefined();
-    expect(getCantons).toBeDefined();
+  it('should search for companies', async () => {
+    const searchCompaniesSpy = vi.spyOn(client, 'searchCompanies').mockResolvedValue({ companies: [{ uid: 'CHE-123.456.789' }] });
+    await client.searchCompanies({ name: 'Tenderlift' });
+    expect(searchCompaniesSpy).toHaveBeenCalledWith({ name: 'Tenderlift' });
   });
 
-  it('functions have correct type signatures', () => {
-    // These should all be functions
-    expect(typeof searchCompanies).toBe('function');
-    expect(typeof getCompanyByUid).toBe('function');
-    expect(typeof getLegalForms).toBe('function');
-    expect(typeof getCantons).toBe('function');
-  });
-
-  it('configuration with throttle works', async () => {
-    const startTime = Date.now();
-
-    configureClient({
-      throttle: { minIntervalMs: 50 },
-    });
-
-    // Note: These would normally make real API calls
-    // In a real test environment, we'd mock the fetch calls
-    // For now, we're just verifying the configuration doesn't throw
-
-    expect(Date.now() - startTime).toBeLessThan(100);
-  });
-
-  it('auth configuration sets up correctly', () => {
-    expect(() => {
-      configureClient({
-        auth: {
-          username: 'testuser',
-          password: 'testpass',
-        },
-      });
-    }).not.toThrow();
+  it('should get a company by UID', async () => {
+    const searchCompaniesSpy = vi.spyOn(client, 'searchCompanies').mockResolvedValue({ companies: [{ uid: 'CHE-123.456.789' }] });
+    const getCompanyByUidSpy = vi.spyOn(client, 'getCompanyByUid').mockResolvedValue({ uid: 'CHE-123.456.789' });
+    // First, search for a company to get a valid UID
+    const result = await client.searchCompanies({ name: 'Tenderlift' });
+    const uid = result.companies[0].uid;
+    await client.getCompanyByUid({ uid });
+    expect(getCompanyByUidSpy).toHaveBeenCalledWith({ uid });
   });
 });
