@@ -1,0 +1,50 @@
+# Changelog
+
+All notable changes to @tenderlift/zefix-client will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- Complete production-ready setup matching simap-client quality standards
+- Comprehensive test suite with Node.js and Cloudflare Workers tests
+- GitHub Actions CI/CD workflows
+- Code quality tools (xo, lefthook)
+- Security policy and contributing guidelines
+- Enhanced examples directory with multiple use cases
+- Bundle size tracking with size-limit
+- Type definition tests with tsd
+
+### Changed
+- Updated minimum Node.js version to 20
+- Enhanced package.json with complete scripts and metadata
+- Improved test infrastructure with MSW mocking
+
+## [0.1.0] - 2025-01-09
+
+### Added
+- Initial release of ZEFIX API TypeScript client
+- Zero-dependency, edge-compatible implementation
+- Full TypeScript support with generated types from OpenAPI spec
+- Support for all ZEFIX API endpoints:
+  - Company search by name, canton, status
+  - Company lookup by UID, CHID, EHRAID
+  - Reference data (legal forms, cantons, SOGC publications)
+- HTTP Basic Authentication support
+- Built-in rate limiting/throttling
+- Cloudflare Workers compatibility
+- Comprehensive error handling with typed errors
+- Type guards and utility functions
+- Browser environment detection (prevents CORS issues)
+- Examples for basic usage and Cloudflare Workers
+
+### Technical Details
+- Auto-generated from ZEFIX OpenAPI 3.1.0 specification
+- Bundle size: ~12KB minified
+- Runtime: Node.js 18+, Cloudflare Workers, Vercel/Netlify Edge
+- No runtime dependencies (fully bundled)
+
+[Unreleased]: https://github.com/TenderLift/zefix-client/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/TenderLift/zefix-client/releases/tag/v0.1.0

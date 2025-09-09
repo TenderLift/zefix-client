@@ -1,0 +1,19 @@
+@tenderlift/zefix-client
+Copyright (c) 2025 TenderLift
+
+This software includes code generated from the ZEFIX API OpenAPI specification.
+ZEFIX (Zentraler Firmenindex) is operated by the Swiss Federal Office of Justice.
+
+The ZEFIX API specification is publicly available at:
+https://www.zefix.admin.ch/ZefixPublicREST/v3/api-docs
+
+This package was auto-generated using:
+- @hey-api/openapi-ts (https://github.com/hey-api/openapi-ts)
+- @hey-api/client-fetch (https://github.com/hey-api/openapi-ts)
+
+All dependencies are bundled into the final package with no runtime dependencies.
+
+For more information about ZEFIX:
+- ZEFIX Portal: https://www.zefix.ch
+- ZEFIX API Documentation: https://www.zefix.admin.ch/ZefixPublicREST/swagger-ui/index.html
+- Swiss Federal Office of Justice: https://www.bj.admin.ch

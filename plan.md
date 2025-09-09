@@ -6,8 +6,8 @@ This document outlines the mandatory tasks to bring the `zefix-api-client` to th
 
 - [x] Initialize a new git repository and push to GitHub.
 - [x] Review and update `package.json` for a standalone package.
-  - [ ] Update `name`, `version`, `description`, `author`, `license`, etc.
-  - [ ] Add `repository`, `bugs`, and `homepage` fields.
+  - [ ] **[IN PROGRESS]** Update `name`, `version`, `description`, `author`, `license`, etc.
+  - [x] Add `repository`, `bugs`, and `homepage` fields.
   - [x] Clean up scripts and dependencies.
 - [ ] Create a comprehensive `README.md` for the standalone repository.
 - [ ] Add standard documentation files:
@@ -33,16 +33,45 @@ This document outlines the mandatory tasks to bring the `zefix-api-client` to th
 ## Stage 3: Code and Tests
 
 - [ ] Add `examples/` directory with usage examples.
-- [ ] Add `test/` directory with comprehensive tests.
-- [ ] Add `spec/` directory for API specifications.
-- [ ] Review and refactor the existing code to be a standalone library.
-- [ ] Ensure all dependencies are correctly listed in `package.json`.
+- [x] Add `test/` directory with comprehensive tests.
+- [x] Add `spec/` directory for API specifications.
+- [x] Review and refactor the existing code to be a standalone library.
+- [x] Ensure all dependencies are correctly listed in `package.json`.
 
 ## Stage 4: Finalization
 
 - [ ] Perform a final review of all files and configurations.
 - [ ] Publish the package to a package manager (e.g., npm).
 - [ ] Create the first release on GitHub.
+
+## Next Steps (Granular)
+
+1.  **Complete `package.json`:**
+    - [ ] Set `name` to `@tenderlift/zefix-client`.
+    - [ ] Set `version` to `0.1.0`.
+    - [ ] Set `private` to `false`.
+    - [ ] Add `publishConfig` with `access: public`.
+2.  **Add Legal Documents:**
+    - [ ] Create `LICENSE` file (MIT).
+    - [ ] Create `NOTICE` file.
+    - [ ] Create `CODE_OF_CONDUCT.md`.
+    - [ ] Create `CONTRIBUTING.md`.
+    - [ ] Create `SECURITY.md`.
+3.  **Set up Linting and Formatting:**
+    - [ ] Install `lefthook` and `xo`.
+    - [ ] Configure `xo` in `xo.config.js`.
+    - [ ] Configure `lefthook` in `lefthook.yml` to run `xo` on pre-commit.
+4.  **Create `README.md`:**
+    - [ ] Add badges for build status, coverage, etc.
+    - [ ] Add installation instructions.
+    - [ ] Add usage examples.
+    - [ ] Add API documentation.
+5.  **Add Examples:**
+    - [ ] Create `examples/basic-usage.ts`.
+    - [ ] Create `examples/cloudflare-worker.ts`.
+6.  **Set up CI/CD:**
+    - [ ] Create `.github/workflows/ci.yml` to run linting, testing, and building on PRs.
+    - [ ] Create `.github/workflows/release.yml` to publish to npm on new releases.
 
 ## Key Requirements
 
