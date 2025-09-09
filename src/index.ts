@@ -1,5 +1,3 @@
-// Main client export
-// Re-export configureClient and other utilities
 import {ZefixApiClient, type ClientConfig} from './client';
 
 export {ZefixApiClient} from './client';
@@ -7,23 +5,23 @@ export {ZefixApiClient} from './client';
 // Generated client and SDK exports
 export {client} from './generated/client.gen';
 export {
-	byBfsCommunityId as getCantons,
+	list2 as getCommunities,
 	showChid as getCompanyByChid,
 	showEhraid as getCompanyByEhraid,
 	showUid as getCompanyByUid,
-	list2 as getLegalForms,
+	list1 as getLegalForms,
+	byBfsCommunityId as getRegistryByBfsCommunityId,
 	byDate as getSogcByDate,
 	get as getSogcPublications,
 	search as searchCompanies,
 } from './generated/sdk.gen';
 
 // Utility exports
-export * from './utils/type-guards';
 export {toBase64} from './utils/node-or-worker';
+export * from './utils/type-guards';
 
-// Type exports
-export type * from './generated/types.gen';
 export type {Auth, ClientConfig} from './client';
+export type * from './generated/types.gen';
 
 let globalClient: ZefixApiClient | undefined;
 
