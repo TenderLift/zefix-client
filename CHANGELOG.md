@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- 5e2031e: Migrate release pipeline to npm OIDC trusted publishing
+
 ## 1.0.0
 
 ### Major Changes
@@ -19,6 +25,7 @@
   ```
 
   ### Features:
+
   - New zero-dependency UID submodule (~1KB minified)
   - Pure functions with TypeScript branded types for type safety
   - Flexible input handling (CHE-123.456.789, che 123 456 789, with VAT suffixes)
@@ -34,6 +41,7 @@
 - 88d1896: Initial release of @tenderlift/zefix-client
 
   ## Features
+
   - 🚀 **Edge-ready**: Works in Cloudflare Workers, Vercel Edge, and other edge environments
   - 🔒 **Type-safe**: Full TypeScript support with generated types from OpenAPI spec
   - 📦 **Zero runtime dependencies**: Minimal bundle size with no external dependencies
@@ -43,6 +51,7 @@
   - 🔧 **Flexible configuration**: Support for multiple authentication methods and custom settings
 
   ## API Coverage
+
   - Company search and lookup
   - Legal forms and communities data
   - SOGC publications
@@ -50,6 +59,7 @@
   - Validation utilities for UIDs and company data
 
   ## Documentation
+
   - Comprehensive examples for Node.js and Cloudflare Workers
   - Full API documentation
   - TypeScript type definitions
