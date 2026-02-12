@@ -1,6 +1,6 @@
 {
   "name": "@tenderlift/zefix-client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A zero-dependency, edge-compatible, and type-safe Zefix API client.",
   "private": false,
   "type": "module",
