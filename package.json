@@ -105,5 +105,13 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "pnpm@10.14.0"
+  "packageManager": "pnpm@10.14.0",
+  "pnpm": {
+    "overrides": {
+      "minimatch": ">=10.2.1",
+      "tar": ">=7.5.8",
+      "devalue": ">=5.6.3",
+      "wrangler": ">=4.59.1"
+    }
+  }
 }
