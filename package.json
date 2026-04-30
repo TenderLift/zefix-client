@@ -79,6 +79,16 @@
     "changeset:version": "changeset version",
     "changeset:publish": "changeset publish"
   },
+  "size-limit": [
+    {
+      "path": "dist/index.js",
+      "limit": "15 KB"
+    },
+    {
+      "path": "dist/uid.js",
+      "limit": "1 KB"
+    }
+  ],
   "tsd": {
     "directory": "test"
   },
