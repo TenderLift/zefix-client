@@ -167,7 +167,6 @@ async function handleCompanyLookup(
 		const company = companies[0];
 
 		if (!company) {
-			// eslint-disable-next-line @typescript-eslint/only-throw-error
 			throw new ZefixError('Company not found', 404);
 		}
 

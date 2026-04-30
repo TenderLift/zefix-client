@@ -232,7 +232,7 @@ async function referenceDataExample() {
 
 		console.log('Available Legal Forms:');
 		legalForms.slice(0, 5).forEach((form) => {
-			console.log(`- ${form.name} (ID: ${form.id})`);
+			console.log(`- ${form.name?.de ?? ''} (ID: ${form.id})`);
 		});
 		console.log(`... and ${Math.max(0, legalForms.length - 5)} more`);
 

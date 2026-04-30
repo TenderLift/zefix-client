@@ -1,17 +1,29 @@
 /// <reference types="@cloudflare/workers-types" />
-/// <reference types="@cloudflare/vitest-pool-workers" />
-import {fetchMock} from 'cloudflare:test';
-import {afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
+/// <reference types="@cloudflare/vitest-pool-workers/types" />
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {client, configureClient, toBase64} from '../src/index';
 
-beforeAll(() => {
-	fetchMock.activate();
-	fetchMock.disableNetConnect();
-});
+function mockFetch(
+	expectedStatus: number,
+	body: unknown,
+	checkRequest?: (request: Request) => void,
+) {
+	const fetchSpy = vi.fn(
+		async (input: RequestInfo | URL, init?: RequestInit) => {
+			const request = new Request(input, init);
+			checkRequest?.(request);
+			return new Response(JSON.stringify(body), {
+				status: expectedStatus,
+				headers: {'Content-Type': 'application/json'},
+			});
+		},
+	);
+	vi.stubGlobal('fetch', fetchSpy);
+	return fetchSpy;
+}
 
 afterEach(() => {
-	fetchMock.assertNoPendingInterceptors();
-	vi.clearAllMocks();
+	vi.restoreAllMocks();
 });
 
 describe('ZEFIX Client Configuration - Workers Runtime', () => {
@@ -20,7 +32,6 @@ describe('ZEFIX Client Configuration - Workers Runtime', () => {
 			baseUrl: 'https://www.zefix.admin.ch/ZefixPublicREST',
 		});
 
-		// Client should be configured (we can't easily test internal state)
 		expect(client).toBeDefined();
 		expect(client.setConfig).toBeDefined();
 	});
@@ -30,52 +41,34 @@ describe('ZEFIX Client Configuration - Workers Runtime', () => {
 		const password = 'testpass';
 		const expectedAuth = `Basic ${toBase64(`${username}:${password}`)}`;
 
-		// Configure with auth
 		configureClient({
 			auth: {username, password},
 		});
 
-		// Mock a simple GET request
-		fetchMock
-			.get('https://www.zefix.admin.ch')
-			.intercept({
-				path: '/ZefixPublicREST/api/v1/legalForms',
-				headers: {
-					Authorization: expectedAuth,
-				},
-			})
-			.reply(200, JSON.stringify({legalForms: []}), {
-				headers: {'Content-Type': 'application/json'},
-			});
+		const fetchSpy = mockFetch(200, {legalForms: []}, (request) => {
+			expect(request.headers.get('Authorization')).toBe(expectedAuth);
+		});
 
-		// Make request through client
 		const response = await client.get({
 			url: '/api/v1/legalForms',
 		});
 
-		expect(response.response.ok).toBe(true);
+		expect(fetchSpy).toHaveBeenCalledOnce();
+		expect(response.response!.ok).toBe(true);
 		expect(response.data).toEqual({legalForms: []});
 	});
 
 	it('works without auth for public endpoints', async () => {
-		// Configure without auth
 		configureClient({});
 
-		// Mock a request without auth requirement
-		fetchMock
-			.get('https://www.zefix.admin.ch')
-			.intercept({
-				path: '/ZefixPublicREST/api/v1/legalForms',
-			})
-			.reply(200, JSON.stringify({legalForms: ['AG', 'GmbH']}), {
-				headers: {'Content-Type': 'application/json'},
-			});
+		const fetchSpy = mockFetch(200, {legalForms: ['AG', 'GmbH']});
 
 		const response = await client.get({
 			url: '/api/v1/legalForms',
 		});
 
-		expect(response.response.ok).toBe(true);
+		expect(fetchSpy).toHaveBeenCalledOnce();
+		expect(response.response!.ok).toBe(true);
 		expect((response.data as any).legalForms).toContain('AG');
 	});
 
@@ -89,57 +82,54 @@ describe('ZEFIX Client Configuration - Workers Runtime', () => {
 			activeOnly: true,
 		};
 
-		// Mock POST search endpoint
-		fetchMock
-			.get('https://www.zefix.admin.ch')
-			.intercept({
-				method: 'POST',
-				path: '/ZefixPublicREST/api/v1/company/search',
-				body: JSON.stringify(searchBody),
-			})
-			.reply(
-				200,
-				JSON.stringify({
-					companies: [{name: 'Example AG'}],
-					totalCount: 1,
-				}),
-				{headers: {'Content-Type': 'application/json'}},
-			);
+		const fetchSpy = mockFetch(
+			200,
+			{
+				companies: [{name: 'Example AG'}],
+				totalCount: 1,
+			},
+			async (request) => {
+				expect(request.method).toBe('POST');
+				expect(new URL(request.url).pathname).toBe(
+					'/ZefixPublicREST/api/v1/company/search',
+				);
+				const body = await request.json();
+				expect(body).toEqual(searchBody);
+			},
+		);
 
 		const response = await client.post({
 			url: '/api/v1/company/search',
 			body: searchBody,
 		});
 
-		expect(response.response.ok).toBe(true);
+		expect(fetchSpy).toHaveBeenCalledOnce();
+		expect(response.response!.ok).toBe(true);
 		expect((response.data as any).totalCount).toBe(1);
 	});
 
 	it('handles different language parameters', async () => {
 		configureClient({});
 
-		// Mock GET with query parameter
-		fetchMock
-			.get('https://www.zefix.admin.ch')
-			.intercept({
-				path: '/ZefixPublicREST/api/v1/legalForms',
-				query: {languageKey: 'it'},
-			})
-			.reply(
-				200,
-				JSON.stringify({
-					legalForms: ['SA', 'Sagl'],
-					language: 'it',
-				}),
-				{headers: {'Content-Type': 'application/json'}},
-			);
+		const fetchSpy = mockFetch(
+			200,
+			{
+				legalForms: ['SA', 'Sagl'],
+				language: 'it',
+			},
+			(request) => {
+				const url = new URL(request.url);
+				expect(url.searchParams.get('languageKey')).toBe('it');
+			},
+		);
 
 		const response = await client.get({
 			url: '/api/v1/legalForms',
 			query: {languageKey: 'it'},
 		});
 
-		expect(response.response.ok).toBe(true);
+		expect(fetchSpy).toHaveBeenCalledOnce();
+		expect(response.response!.ok).toBe(true);
 		expect((response.data as any).language).toBe('it');
 	});
 
@@ -148,39 +138,27 @@ describe('ZEFIX Client Configuration - Workers Runtime', () => {
 			auth: {username: 'wrong', password: 'invalid'},
 		});
 
-		// Mock 401 response
-		fetchMock
-			.get('https://www.zefix.admin.ch')
-			.intercept({
-				path: '/ZefixPublicREST/api/v1/company/uid/CHE-123.456.789',
-			})
-			.reply(
-				401,
-				JSON.stringify({
-					status: 401,
-					error: 'Unauthorized',
-					message: 'Invalid credentials',
-				}),
-			);
+		mockFetch(401, {
+			status: 401,
+			error: 'Unauthorized',
+			message: 'Invalid credentials',
+		});
 
 		const response = await client.get({
 			url: '/api/v1/company/uid/CHE-123.456.789',
 		});
 
-		expect(response.response.ok).toBe(false);
-		expect(response.response.status).toBe(401);
+		expect(response.response!.ok).toBe(false);
+		expect(response.response!.status).toBe(401);
 	});
 
 	it('base64 encodes credentials correctly', () => {
-		// Test standard credentials
 		expect(toBase64('user:pass')).toBe('dXNlcjpwYXNz');
 
-		// Test with special characters
 		const specialAuth = toBase64('user@example.com:p@$$w0rd');
 		expect(specialAuth).toBeDefined();
 		expect(specialAuth.length).toBeGreaterThan(0);
 
-		// Test with unicode
 		const unicodeAuth = toBase64('user:pässwörd');
 		expect(unicodeAuth).toBeDefined();
 		expect(unicodeAuth.length).toBeGreaterThan(0);
