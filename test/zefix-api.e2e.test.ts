@@ -59,7 +59,7 @@ describe('ZEFIX API Client E2E Tests - Production', () => {
 
 			// Validate response structure
 			expect(response.data).toBeDefined();
-			expect(response.response.ok).toBe(true);
+			expect(response.response!.ok).toBe(true);
 
 			const companies = response.data!;
 
@@ -106,7 +106,7 @@ describe('ZEFIX API Client E2E Tests - Production', () => {
 			});
 
 			expect(response.data).toBeDefined();
-			expect(response.response.ok).toBe(true);
+			expect(response.response!.ok).toBe(true);
 
 			const companies = response.data!;
 			expect(Array.isArray(companies)).toBe(true);
@@ -220,7 +220,7 @@ describe('ZEFIX API Client E2E Tests - Production', () => {
 			});
 
 			expect(detailResponse.data).toBeDefined();
-			expect(detailResponse.response.ok).toBe(true);
+			expect(detailResponse.response!.ok).toBe(true);
 
 			const companyDetails = detailResponse.data!;
 			expect(Array.isArray(companyDetails)).toBe(true);
@@ -293,7 +293,7 @@ describe('ZEFIX API Client E2E Tests - Production', () => {
 				});
 
 				expect(detailResponse.data).toBeDefined();
-				expect(detailResponse.response.ok).toBe(true);
+				expect(detailResponse.response!.ok).toBe(true);
 
 				const companyDetails = detailResponse.data!;
 				expect(Array.isArray(companyDetails)).toBe(true);
@@ -311,7 +311,7 @@ describe('ZEFIX API Client E2E Tests - Production', () => {
 			const response = await getCommunities();
 
 			expect(response.data).toBeDefined();
-			expect(response.response.ok).toBe(true);
+			expect(response.response!.ok).toBe(true);
 
 			const cantons = response.data!;
 			expect(Array.isArray(cantons)).toBe(true);
@@ -345,7 +345,7 @@ describe('ZEFIX API Client E2E Tests - Production', () => {
 			const response = await getLegalForms({});
 
 			expect(response.data).toBeDefined();
-			expect(response.response.ok).toBe(true);
+			expect(response.response!.ok).toBe(true);
 
 			const legalForms = response.data!;
 			expect(Array.isArray(legalForms)).toBe(true);
@@ -399,7 +399,7 @@ describe('ZEFIX API Client E2E Tests - Production', () => {
 			const response = await getLegalForms();
 
 			expect(response.data).toBeDefined();
-			expect(response.response.ok).toBe(true);
+			expect(response.response!.ok).toBe(true);
 
 			const legalForms = response.data!;
 			expect(Array.isArray(legalForms)).toBe(true);
@@ -485,7 +485,7 @@ describe('ZEFIX API Client E2E Tests - Production', () => {
 			results.forEach((result) => {
 				expect(result.response).toBeDefined();
 				// Rate limiting should be handled by throttle config
-				expect(result.response.status).not.toBe(429);
+				expect(result.response!.status).not.toBe(429);
 			});
 		});
 

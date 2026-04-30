@@ -53,7 +53,7 @@ export function isLegalForm(value: unknown): value is LegalForm {
 		'id' in value &&
 		'name' in value &&
 		typeof (value as {id?: unknown}).id === 'number' &&
-		typeof (value as {name?: unknown}).name === 'string'
+		typeof (value as {name?: unknown}).name === 'object'
 	);
 }
 
@@ -64,9 +64,9 @@ export function isBfsCommunity(value: unknown): value is BfsCommunity {
 	return (
 		typeof value === 'object' &&
 		value !== null &&
-		'communityName' in value &&
+		'name' in value &&
 		'bfsId' in value &&
-		typeof (value as {communityName?: unknown}).communityName === 'string' &&
+		typeof (value as {name?: unknown}).name === 'string' &&
 		typeof (value as {bfsId?: unknown}).bfsId === 'number'
 	);
 }
