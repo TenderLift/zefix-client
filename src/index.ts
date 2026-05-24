@@ -2,19 +2,21 @@ import {ZefixApiClient, type ClientConfig} from './client';
 
 export {ZefixApiClient} from './client';
 
-// Generated client and SDK exports
-export {client} from './generated/client.gen';
+// Shared client + SDK exports. These resolve through a single globalThis-pinned
+// client so `configureClient()` applies regardless of which bundle variant
+// (ESM/CJS) the caller imported — see `shared-client.ts` for the rationale.
 export {
-	list2 as getCommunities,
-	showChid as getCompanyByChid,
-	showEhraid as getCompanyByEhraid,
-	showUid as getCompanyByUid,
-	list1 as getLegalForms,
-	byBfsCommunityId as getRegistryByBfsCommunityId,
-	byDate as getSogcByDate,
-	get as getSogcPublications,
-	search as searchCompanies,
-} from './generated/sdk.gen';
+	sharedClient as client,
+	getCommunities,
+	getCompanyByChid,
+	getCompanyByEhraid,
+	getCompanyByUid,
+	getLegalForms,
+	getRegistryByBfsCommunityId,
+	getSogcByDate,
+	getSogcPublications,
+	searchCompanies,
+} from './shared-client';
 
 // Utility exports
 export {ensureOk, ZefixError} from './utils/errors';
