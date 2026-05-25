@@ -1,17 +1,17 @@
-import {client} from './generated/client.gen';
 import type {Config as GeneratedClientConfig} from './generated/client/types.gen';
-import {toBase64} from './utils/node-or-worker';
 import {
-	byBfsCommunityId as getRegistryByBfsCommunityIdSdk,
-	showChid as getCompanyByChidSdk,
-	showEhraid as getCompanyByEhraidSdk,
-	showUid as getCompanyByUidSdk,
-	list1 as getLegalFormsSdk,
-	list2 as getCommunitiesSdk,
-	byDate as getSogcByDateSdk,
-	get as getSogcPublicationsSdk,
-	search as searchCompaniesSdk,
-} from './generated/sdk.gen';
+	sharedClient as client,
+	getRegistryByBfsCommunityId as getRegistryByBfsCommunityIdSdk,
+	getCompanyByChid as getCompanyByChidSdk,
+	getCompanyByEhraid as getCompanyByEhraidSdk,
+	getCompanyByUid as getCompanyByUidSdk,
+	getLegalForms as getLegalFormsSdk,
+	getCommunities as getCommunitiesSdk,
+	getSogcByDate as getSogcByDateSdk,
+	getSogcPublications as getSogcPublicationsSdk,
+	searchCompanies as searchCompaniesSdk,
+} from './shared-client';
+import {toBase64} from './utils/node-or-worker';
 
 export type Auth = {
 	username?: string;
