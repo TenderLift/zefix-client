@@ -10,6 +10,7 @@ import {
 	getSogcByDate as getSogcByDateSdk,
 	getSogcPublications as getSogcPublicationsSdk,
 	searchCompanies as searchCompaniesSdk,
+	sharedSettings,
 } from './shared-client';
 import {toBase64} from './utils/node-or-worker';
 
@@ -23,6 +24,12 @@ export type ClientConfig = {
 	auth?: Auth;
 	throttle?: {minIntervalMs?: number};
 	customFetch?: typeof fetch;
+	/**
+	 * Repair the double-encoded UTF-8 ZEFIX serves in SOGC notice text
+	 * (`ZÃ¼rich` → `Zürich`). Selective and idempotent; default `true`. Set
+	 * `false` to receive the upstream text verbatim.
+	 */
+	repairEncoding?: boolean;
 };
 
 export class ZefixApiClient {
@@ -46,6 +53,7 @@ export class ZefixApiClient {
 		}
 
 		client.setConfig(clientConfig);
+		sharedSettings.repairEncoding = config.repairEncoding ?? true;
 
 		client.interceptors.request.use(async (req: Request) => {
 			const headers = new Headers(req.headers);

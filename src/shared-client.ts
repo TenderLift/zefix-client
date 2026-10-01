@@ -10,6 +10,7 @@ import {
 	showEhraid,
 	showUid,
 } from './generated/sdk.gen';
+import {repairStringsDeep} from './text';
 
 /**
  * Dual-package-hazard guard.
@@ -50,36 +51,103 @@ const resolvedClient = globalScope[SHARED_CLIENT_KEY] ?? generatedClient;
 globalScope[SHARED_CLIENT_KEY] = resolvedClient;
 export const sharedClient = resolvedClient;
 
+/**
+ * Process-wide client settings, pinned on `globalThis` for the same reason as
+ * the client itself: `configureClient()` on one bundle variant must govern SDK
+ * calls resolved through the other.
+ */
+export type SharedSettings = {
+	/** Repair upstream double-encoded UTF-8 in response strings. Default `true`. */
+	repairEncoding: boolean;
+};
+
+const SHARED_SETTINGS_KEY = Symbol.for(
+	'@tenderlift/zefix-client/shared-settings@1',
+);
+
+const settingsScope = globalThis as typeof globalThis & {
+	[SHARED_SETTINGS_KEY]?: SharedSettings;
+};
+
+export const sharedSettings: SharedSettings = settingsScope[
+	SHARED_SETTINGS_KEY
+] ?? {repairEncoding: true};
+settingsScope[SHARED_SETTINGS_KEY] = sharedSettings;
+
+/**
+ * ZEFIX serves the SOGC notice text double-encoded (`ZÃ¼rich`) on most
+ * publication days since 2026-03-16 — see `text.ts`. Every SDK function below
+ * repairs its parsed response through this transformer; the repair is
+ * selective and idempotent, so clean responses pass through unchanged. A
+ * caller-supplied `responseTransformer` still wins (spread last).
+ */
+async function repairEncoding(data: unknown): Promise<unknown> {
+	return sharedSettings.repairEncoding ? repairStringsDeep(data) : data;
+}
+
 // Public SDK functions bound to the shared client. Defaulting `client` to
 // `sharedClient` (rather than the variant-local generated client the raw SDK
 // captures) is what makes `configureClient()` apply across bundle variants. An
 // explicit `options.client` still wins because it is spread last.
 export const searchCompanies = ((options) =>
-	search({client: sharedClient, ...options})) as typeof search;
+	search({
+		client: sharedClient,
+		responseTransformer: repairEncoding,
+		...options,
+	})) as typeof search;
 
 export const getCompanyByUid = ((options) =>
-	showUid({client: sharedClient, ...options})) as typeof showUid;
+	showUid({
+		client: sharedClient,
+		responseTransformer: repairEncoding,
+		...options,
+	})) as typeof showUid;
 
 export const getCompanyByChid = ((options) =>
-	showChid({client: sharedClient, ...options})) as typeof showChid;
+	showChid({
+		client: sharedClient,
+		responseTransformer: repairEncoding,
+		...options,
+	})) as typeof showChid;
 
 export const getCompanyByEhraid = ((options) =>
-	showEhraid({client: sharedClient, ...options})) as typeof showEhraid;
+	showEhraid({
+		client: sharedClient,
+		responseTransformer: repairEncoding,
+		...options,
+	})) as typeof showEhraid;
 
 export const getLegalForms = ((options) =>
-	list1({client: sharedClient, ...options})) as typeof list1;
+	list1({
+		client: sharedClient,
+		responseTransformer: repairEncoding,
+		...options,
+	})) as typeof list1;
 
 export const getCommunities = ((options) =>
-	list2({client: sharedClient, ...options})) as typeof list2;
+	list2({
+		client: sharedClient,
+		responseTransformer: repairEncoding,
+		...options,
+	})) as typeof list2;
 
 export const getRegistryByBfsCommunityId = ((options) =>
 	byBfsCommunityId({
 		client: sharedClient,
+		responseTransformer: repairEncoding,
 		...options,
 	})) as typeof byBfsCommunityId;
 
 export const getSogcByDate = ((options) =>
-	byDate({client: sharedClient, ...options})) as typeof byDate;
+	byDate({
+		client: sharedClient,
+		responseTransformer: repairEncoding,
+		...options,
+	})) as typeof byDate;
 
 export const getSogcPublications = ((options) =>
-	get({client: sharedClient, ...options})) as typeof get;
+	get({
+		client: sharedClient,
+		responseTransformer: repairEncoding,
+		...options,
+	})) as typeof get;

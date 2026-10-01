@@ -37,12 +37,20 @@
       "types": "./dist/uid.d.ts",
       "import": "./dist/uid.js",
       "require": "./dist/uid.cjs"
+    },
+    "./text": {
+      "types": "./dist/text.d.ts",
+      "import": "./dist/text.js",
+      "require": "./dist/text.cjs"
     }
   },
   "typesVersions": {
     "*": {
       "uid": [
         "./dist/uid.d.ts"
+      ],
+      "text": [
+        "./dist/text.d.ts"
       ]
     }
   },
@@ -86,6 +94,10 @@
     },
     {
       "path": "dist/uid.js",
+      "limit": "1 KB"
+    },
+    {
+      "path": "dist/text.js",
       "limit": "1 KB"
     }
   ],

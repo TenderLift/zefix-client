@@ -290,6 +290,36 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 - `pnpm lint` - Run linter
 - `pnpm size` - Check bundle size
 
+## Known Upstream Data Issues
+
+### SOGC notice text is double-encoded (since 2026-03-16)
+
+On most publication days since 16 March 2026, the ZEFIX PublicREST API serves the
+SOGC notice text (`sogcPublication.message`, and the same text in a company's
+`sogcPub[]`) double-encoded: UTF-8 that was once decoded as Windows-1252, so
+`Zürich` arrives as `ZÃ¼rich` and `Übertragbarkeit` as `Ãœbertragbarkeit`. The
+bytes on the wire are valid UTF-8, so no decoder flags it. Whole publication days
+are affected or not; structured fields (`name`, `legalSeat`, `legalSeatId`,
+address, purpose) are not. Consumers that read the seat out of the notice text by
+name lose non-ASCII municipalities on those days.
+
+Nothing is lost upstream, so the repair is exact. Since 1.1.0 the client repairs
+every response string by default; the repair is selective (only runs that form
+valid UTF-8 once mapped back through Windows-1252) and idempotent, so clean text
+passes through unchanged. To receive the upstream text verbatim:
+
+```typescript
+configureClient({ auth, repairEncoding: false });
+```
+
+The repair is also available standalone, e.g. for text you stored earlier:
+
+```typescript
+import { fixDoubleEncodedUtf8, looksDoubleEncoded } from '@tenderlift/zefix-client/text';
+
+fixDoubleEncodedUtf8('GraubÃ¼nden, gemÃ¤ÃŸ'); // 'Graubünden, gemäß'
+```
+
 ## Troubleshooting
 
 ### Common Issues

@@ -4,6 +4,8 @@ import {
 	configureClient,
 	getCompanyByUid,
 	getLegalForms,
+	getSogcByDate,
+	looksDoubleEncoded,
 	searchCompanies,
 } from '../src';
 
@@ -460,6 +462,24 @@ describe('ZEFIX API Client E2E Tests - Production', () => {
 			const companies = response.data!;
 			expect(Array.isArray(companies)).toBe(true);
 			// Results depend on actual data
+		});
+	});
+
+	describe.skipIf(!hasCredentials)('SOGC encoding repair', () => {
+		// 2026-09-29 is served double-encoded upstream (~94% of its notices).
+		// After the client's repair, none may still look double-encoded.
+		it('repairs a double-encoded publication day', async () => {
+			const {data, error} = await getSogcByDate({
+				path: {date: '2026-09-29'},
+			});
+
+			expect(error).toBeUndefined();
+			const messages = (data ?? []).map(
+				(row) => row.sogcPublication?.message ?? '',
+			);
+			expect(messages.length).toBeGreaterThan(100);
+			expect(messages.filter((m) => looksDoubleEncoded(m))).toEqual([]);
+			expect(messages.some((m) => /[äöüéèà]/.test(m))).toBe(true);
 		});
 	});
 

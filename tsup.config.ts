@@ -22,9 +22,9 @@ export default defineConfig([
 		],
 		external: [], // No external runtime dependencies
 	},
-	// UID submodule build
+	// UID + text submodule builds
 	{
-		entry: ['src/uid.ts'],
+		entry: ['src/uid.ts', 'src/text.ts'],
 		format: ['esm', 'cjs'],
 		platform: 'browser',
 		target: 'es2020',
