@@ -306,11 +306,15 @@ name lose non-ASCII municipalities on those days.
 Nothing is lost upstream, so the repair is exact. Since 1.1.0 the client repairs
 that notice text — and only that field — in the responses of `getSogcByDate`,
 `getSogcPublications` and `getCompanyByUid` / `getCompanyByChid` /
-`getCompanyByEhraid`. The repair works per UTF-8 sequence and accepts only what a
-double-encoding plausibly produced, so correct text such as `«CAFÉ»` or `„Fuß“`
-passes through unchanged and a second pass is a no-op. A `responseTransformer`
-you pass runs after the repair. To receive the upstream text verbatim
-(process-wide; omitting the option later keeps your choice):
+`getCompanyByEhraid`. Upstream garbles a notice whole, so the repair decides per
+string: when every non-ASCII character is part of a double-encoded sequence it
+repairs them all (including `−`, `→`, Cyrillic, combining marks); when correct
+accented text sits next to garbled text it repairs only the unambiguous
+sequences; correct text such as `«CAFÉ»` or `„Fuß“` passes through unchanged.
+It is idempotent. A `responseTransformer` — passed to the call or set on the
+client — runs after the repair. To receive the upstream text verbatim
+(process-wide; a later call without the option keeps your choice; must be a
+boolean):
 
 ```typescript
 configureClient({ auth, repairEncoding: false });

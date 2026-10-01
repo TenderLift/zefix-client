@@ -56,6 +56,12 @@ export class ZefixApiClient {
 		// Only an explicit value changes the process-wide setting, so a later
 		// `getClient()` / `new ZefixApiClient()` cannot silently undo an opt-out.
 		if (config.repairEncoding !== undefined) {
+			if (typeof config.repairEncoding !== 'boolean') {
+				throw new TypeError(
+					`ZEFIX API Client Error: repairEncoding must be a boolean, got ${typeof config.repairEncoding}.`,
+				);
+			}
+
 			sharedSettings.repairEncoding = config.repairEncoding;
 		}
 

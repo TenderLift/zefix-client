@@ -1,6 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {afterEach, describe, expect, it} from 'vitest';
 import {
+	client,
 	configureClient,
 	getCompanyByUid,
 	getSogcByDate,
@@ -91,6 +92,30 @@ describe('SOGC encoding repair', () => {
 
 		expect(seen[0]).toContain('dänischer');
 		expect(messages(data)[0]).toContain('dänischer');
+	});
+
+	it('a responseTransformer set on the client runs after the repair', async () => {
+		configureClient({customFetch: serve(upstream)});
+		const seen: string[] = [];
+		client.setConfig({
+			async responseTransformer(raw) {
+				seen.push(...messages(raw as SogcPublicationAndCompanyShort[]));
+				return raw;
+			},
+		});
+		try {
+			await getSogcByDate({path: {date: '2026-09-29'}});
+		} finally {
+			client.setConfig({responseTransformer: undefined});
+		}
+
+		expect(seen[0]).toContain('dänischer');
+	});
+
+	it('rejects a non-boolean repairEncoding', () => {
+		expect(() =>
+			configureClient({repairEncoding: 'false' as unknown as boolean}),
+		).toThrow(TypeError);
 	});
 
 	it('an explicit responseTransformer: undefined keeps the repair', async () => {

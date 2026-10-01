@@ -42,6 +42,11 @@ const CLEAN = [
 	'Yılmaz, Ayşe, türkische Staatsangehörige',
 	'Đặng, Thi Hoàng Diem, vietnamesische Staatsangehörige',
 	'Kapital CHF 100’000 — €‚ ™',
+	'Álvarez, Íñigo; Ðorđe Ýmir; Ïsa',
+	'Zürich −5 → 6 ✓ √ ▪',
+	'Иванов, Пётр, russischer Staatsangehöriger',
+	'u\u0308ber, Gru\u0308ße',
+	'Café ☕ 🙂, in Zürich',
 	'Røjkjær',
 ];
 
@@ -79,20 +84,53 @@ describe('fixDoubleEncodedUtf8', () => {
 		expect(fixDoubleEncodedUtf8('«CAFÉ»')).toBe('«CAFÉ»');
 	});
 
+	it('repairs text garbled twice in one call', () => {
+		for (const clean of CLEAN) {
+			expect(fixDoubleEncodedUtf8(doubleEncode(doubleEncode(clean)))).toBe(
+				clean,
+			);
+		}
+	});
+
+	it('in a mixed string, repairs only the sure sequences', () => {
+		// `È»` is correct text here; `Ã¼` is the defect.
+		expect(fixDoubleEncodedUtf8('«PERCHÈ» Ã¼')).toBe('«PERCHÈ» ü');
+	});
+
 	it('repairs a garbled sequence next to a correct accented character', () => {
 		expect(fixDoubleEncodedUtf8('Ã¼é')).toBe('üé');
 		expect(fixDoubleEncodedUtf8('RøjkjÃ¦r')).toBe('Røjkjær');
 	});
 
-	it('repairs Latin Extended letters only alongside strong evidence', () => {
-		// `Å‚` alone could be innocent; next to `Ã¶` it is part of the defect.
-		expect(fixDoubleEncodedUtf8('Å‚')).toBe('Å‚');
-		expect(fixDoubleEncodedUtf8('Å‚ Ã¶')).toBe('ł ö');
+	it('repairs a Latin Extended letter garbled at the source in clean text', () => {
+		// Registry-side artefacts seen live (2026-06-05 1006668740, 2026-09-10 1006753346).
+		expect(fixDoubleEncodedUtf8('KriÅ¡to, Anna, von Zürich')).toBe(
+			'Krišto, Anna, von Zürich',
+		);
+		expect(
+			fixDoubleEncodedUtf8('Sadiki, Å\u00A0eip, von Uzwil — Geschäft'),
+		).toBe('Sadiki, Šeip, von Uzwil — Geschäft');
+		expect(fixDoubleEncodedUtf8('Đorđe: Ä‘ in Zürich')).toBe(
+			'Đorđe: đ in Zürich',
+		);
+	});
+
+	it('leaves a source artefact that is not a double-encoding alone', () => {
+		// `áŠ¡` strict-decodes to Ethiopic U+12A1 — never the intended text.
+		expect(fixDoubleEncodedUtf8('Lorincík, TomáŠ¡, slowakischer')).toBe(
+			'Lorincík, TomáŠ¡, slowakischer',
+		);
 	});
 
 	it('leaves no residual double-encoding by an independent check', () => {
 		for (const clean of CLEAN) {
-			expect(fixDoubleEncodedUtf8(doubleEncode(clean))).not.toMatch(RESIDUAL);
+			// The oracle is broad (it flags correct `É»` too), so compare with
+			// what the clean text itself scores.
+			const out = fixDoubleEncodedUtf8(doubleEncode(clean));
+			expect(RESIDUAL.test(out)).toBe(RESIDUAL.test(clean));
+			expect(RESIDUAL.test(doubleEncode(clean))).toBe(
+				[...clean].some((c) => c.codePointAt(0)! > 0x7f),
+			);
 		}
 	});
 });

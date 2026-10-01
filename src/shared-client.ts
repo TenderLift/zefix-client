@@ -69,25 +69,30 @@ const settingsScope = globalThis as typeof globalThis & {
 	[SHARED_SETTINGS_KEY]?: SharedSettings;
 };
 
-export const sharedSettings: SharedSettings = settingsScope[
-	SHARED_SETTINGS_KEY
-] ?? {repairEncoding: true};
+// Reuse the object another bundle pinned (so both read one setting), filling in
+// any field an older bundle did not know about.
+const pinnedSettings: Partial<SharedSettings> =
+	settingsScope[SHARED_SETTINGS_KEY] ?? {};
+pinnedSettings.repairEncoding ??= true;
+export const sharedSettings = pinnedSettings as SharedSettings;
 settingsScope[SHARED_SETTINGS_KEY] = sharedSettings;
 
 /**
  * ZEFIX serves the SOGC notice text double-encoded (`ZÃ¼rich`) on most
  * publication days since 2026-03-16 — see `text.ts`. The five SDK functions
  * whose responses carry that text repair it before returning; the repair is
- * selective, so clean text passes through unchanged. A caller-supplied
- * `responseTransformer` runs AFTER the repair, never instead of it.
+ * selective, so clean text passes through unchanged. A `responseTransformer`
+ * — passed to the call, or else set on the client via `client.setConfig()` —
+ * runs AFTER the repair, never instead of it.
  */
 type TransformerOptions = {
 	responseTransformer?: (data: unknown) => Promise<unknown>;
 };
 
 function withSogcRepair<O>(options: O): O {
-	const callerTransformer = (options as TransformerOptions | undefined)
-		?.responseTransformer;
+	const callerTransformer =
+		(options as TransformerOptions | undefined)?.responseTransformer ??
+		(sharedClient.getConfig() as TransformerOptions).responseTransformer;
 	return {
 		...options,
 		async responseTransformer(data: unknown) {
