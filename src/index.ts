@@ -19,6 +19,11 @@ export {
 } from './shared-client';
 
 // Utility exports
+export {
+	fixDoubleEncodedUtf8,
+	looksDoubleEncoded,
+	repairSogcMessages,
+} from './text';
 export {ensureOk, ZefixError} from './utils/errors';
 export {toBase64} from './utils/node-or-worker';
 export * from './utils/type-guards';

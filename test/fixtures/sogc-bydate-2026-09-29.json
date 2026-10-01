@@ -1,0 +1,186 @@
+[
+	{
+		"sogcPublication": {
+			"sogcDate": "2026-09-29",
+			"sogcId": 1006768419,
+			"registryOfCommerceId": 290,
+			"registryOfCommerceCanton": "SH",
+			"registryOfCommerceJournalId": 1864,
+			"registryOfCommerceJournalDate": "2026-09-24",
+			"message": "<FT TYPE=\"F\">1.8.1996 AG</FT>, in <FT TYPE=\"S\">Schaffhausen</FT>, <FT TYPE=\"A\">CHE-115.870.855</FT>, Aktiengesellschaft (SHAB Nr. 84 vom 02.05.2025, Publ. 1006322603). Eingetragene Personen neu oder mutierend: Povlsen, Troels Holch, dÃ¤nischer StaatsangehÃ¶riger, in 8700 Horsens (DK), Mitglied des Verwaltungsrates, mit Kollektivunterschrift zu zweien [bisher: in Odder (DK), Mitglied des Verwaltungsrates, mit Unterschrift zu zweien].",
+			"mutationTypes": [
+				{
+					"id": 17,
+					"key": "aenderungorgane"
+				}
+			]
+		},
+		"companyShort": {
+			"name": "1.8.1996 AG",
+			"ehraid": 989512,
+			"uid": "CHE115870855",
+			"chid": "CH29030168732",
+			"legalSeatId": 2939,
+			"legalSeat": "Schaffhausen",
+			"registryOfCommerceId": 290,
+			"legalForm": {
+				"id": 3,
+				"uid": "0106",
+				"name": {
+					"de": "Aktiengesellschaft",
+					"fr": "Société anonyme",
+					"it": "Società anonima",
+					"en": "Corporation"
+				},
+				"shortName": {
+					"de": "AG",
+					"fr": "SA",
+					"it": "SA",
+					"en": "Ltd"
+				}
+			},
+			"status": "ACTIVE",
+			"sogcDate": "2026-09-29",
+			"deletionDate": null
+		}
+	},
+	{
+		"sogcPublication": {
+			"sogcDate": "2026-09-29",
+			"sogcId": 1006768706,
+			"registryOfCommerceId": 550,
+			"registryOfCommerceCanton": "VD",
+			"registryOfCommerceJournalId": 20034,
+			"registryOfCommerceJournalDate": "2026-09-24",
+			"message": "<FT TYPE=\"F\">360 IA SÃ rl</FT>, Ã  <FT TYPE=\"S\">Ormont-Dessus</FT>, <FT TYPE=\"A\">CHE-370.288.351</FT> (FOSC du 24.06.2026, p. 0/1006687233). Bersier Gilles-Marcel est maintenant Ã  Ormont-Dessus.",
+			"mutationTypes": [
+				{
+					"id": 17,
+					"key": "aenderungorgane"
+				}
+			]
+		},
+		"companyShort": {
+			"name": "360 IA Sàrl",
+			"ehraid": 1755589,
+			"uid": "CHE370288351",
+			"chid": "CH55012577403",
+			"legalSeatId": 5411,
+			"legalSeat": "Ormont-Dessus",
+			"registryOfCommerceId": 550,
+			"legalForm": {
+				"id": 4,
+				"uid": "0107",
+				"name": {
+					"de": "Gesellschaft mit beschränkter Haftung",
+					"fr": "Société à responsabilité limitée",
+					"it": "Società a garanzia limitata",
+					"en": "Limited Liability Company"
+				},
+				"shortName": {
+					"de": "GmbH",
+					"fr": "Sàrl",
+					"it": "Sagl",
+					"en": "LLC"
+				}
+			},
+			"status": "ACTIVE",
+			"sogcDate": "2026-09-29",
+			"deletionDate": null
+		}
+	},
+	{
+		"sogcPublication": {
+			"sogcDate": "2026-09-29",
+			"sogcId": 1006768126,
+			"registryOfCommerceId": 130,
+			"registryOfCommerceCanton": "SZ",
+			"registryOfCommerceJournalId": 6589,
+			"registryOfCommerceJournalDate": "2026-09-24",
+			"message": "<FT TYPE=\"N\">AI Warden AG</FT>, in <FT TYPE=\"5\">Altendorf</FT>, <FT TYPE=\"A\">CHE-299.397.664</FT>, c/o Alexandra Nolan, Brandweid 36, 8852 Altendorf, Aktiengesellschaft (Neueintragung). Statutendatum: 22.09.2026. Zweck: Die Gesellschaft bezweckt die Erbringung von Dienstleistungen in den Bereichen Informatik, IT- Beratung und Softwareentwicklung. Dazu gehÃ¶ren insbesondere die Entwicklung, der Vertrieb und die Wartung von SoftwarelÃ¶sungen sowie die Beratung in technologischen und digitalen Fragestellungen. Die Gesellschaft kann im In- und Ausland Zweigniederlassungen errichten, sich an anderen Unternehmungen beteiligen sowie alle GeschÃ¤fte tÃ¤tigen, die direkt oder indirekt mit ihrem Zweck in Zusammenhang stehen oder geeignet sind, diesen zu fÃ¶rdern. Sie kann auch Finanzierungen fÃ¼r eigene oder fremde Rechnung vornehmen sowie Garantien und BÃ¼rgschaften fÃ¼r Tochtergesellschaften und Dritte eingehen. Aktienkapital: CHF 100&apos;000.00. Liberierung Aktienkapital: CHF 50&apos;000.00. Aktien: 100 Namenaktien zu CHF 1&apos;000.00. Publikationsorgan: SHAB. Mitteilungen an die AktionÃ¤re erfolgen per Brief oder E-Mail an die im Aktienbuch verzeichneten Adressen. Vinkulierung: Die Ãœbertragbarkeit der Namenaktien ist nach Massgabe der Statuten beschrÃ¤nkt. GemÃ¤ss ErklÃ¤rung bei der GrÃ¼ndung der Gesellschaft wird auf eine eingeschrÃ¤nkte Revision verzichtet. Eingetragene Personen: Nolan, Alexandra, polnische StaatsangehÃ¶rige, in Altendorf, Mitglied, mit Einzelunterschrift.",
+			"mutationTypes": [
+				{
+					"id": 1,
+					"key": "status"
+				},
+				{
+					"id": 2,
+					"key": "status.neu"
+				}
+			]
+		},
+		"companyShort": {
+			"name": "AI Warden AG",
+			"ehraid": 1769482,
+			"uid": "CHE299397664",
+			"chid": "CH13030375464",
+			"legalSeatId": 1341,
+			"legalSeat": "Altendorf",
+			"registryOfCommerceId": 130,
+			"legalForm": {
+				"id": 3,
+				"uid": "0106",
+				"name": {
+					"de": "Aktiengesellschaft",
+					"fr": "Société anonyme",
+					"it": "Società anonima",
+					"en": "Corporation"
+				},
+				"shortName": {
+					"de": "AG",
+					"fr": "SA",
+					"it": "SA",
+					"en": "Ltd"
+				}
+			},
+			"status": "ACTIVE",
+			"sogcDate": "2026-09-29",
+			"deletionDate": null
+		}
+	},
+	{
+		"sogcPublication": {
+			"sogcDate": "2026-09-29",
+			"sogcId": 1006768445,
+			"registryOfCommerceId": 320,
+			"registryOfCommerceCanton": "SG",
+			"registryOfCommerceJournalId": 11121,
+			"registryOfCommerceJournalDate": "2026-09-24",
+			"message": "<FT TYPE=\"F\">Andreas und Heidi Keller-Stiftung</FT>, in <FT TYPE=\"S\">St. Gallen</FT>, <FT TYPE=\"A\">CHE-446.811.123</FT>, Stiftung (SHAB Nr. 134 vom 15.07.2026, Publ. 1006707547). Domizil neu: Gartenstrasse 5, 9000 St. Gallen.",
+			"mutationTypes": [
+				{
+					"id": 16,
+					"key": "adressaenderung"
+				}
+			]
+		},
+		"companyShort": {
+			"name": "Andreas und Heidi Keller-Stiftung",
+			"ehraid": 1270862,
+			"uid": "CHE446811123",
+			"chid": "CH32070803171",
+			"legalSeatId": 3203,
+			"legalSeat": "St. Gallen",
+			"registryOfCommerceId": 320,
+			"legalForm": {
+				"id": 7,
+				"uid": "0110",
+				"name": {
+					"de": "Stiftung",
+					"fr": "Fondation",
+					"it": "Fondazione",
+					"en": "Foundation"
+				},
+				"shortName": {
+					"de": "Stift",
+					"fr": "Fond",
+					"it": "Fond",
+					"en": "Found"
+				}
+			},
+			"status": "ACTIVE",
+			"sogcDate": "2026-09-29",
+			"deletionDate": null
+		}
+	}
+]

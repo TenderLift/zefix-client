@@ -290,6 +290,46 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 - `pnpm lint` - Run linter
 - `pnpm size` - Check bundle size
 
+## Known Upstream Data Issues
+
+### SOGC notice text is double-encoded (since 2026-03-16)
+
+On most publication days since 16 March 2026, the ZEFIX PublicREST API serves the
+SOGC notice text (`sogcPublication.message`, and the same text in a company's
+`sogcPub[]`) double-encoded: UTF-8 that was once decoded as Windows-1252, so
+`Zürich` arrives as `ZÃ¼rich` and `Übertragbarkeit` as `Ãœbertragbarkeit`. The
+bytes on the wire are valid UTF-8, so no decoder flags it. Whole publication days
+are affected or not; structured fields (`name`, `legalSeat`, `legalSeatId`,
+address, purpose) are not. Consumers that read the seat out of the notice text by
+name lose non-ASCII municipalities on those days.
+
+Nothing is lost upstream, so the repair is exact. Since 1.1.0 the client repairs
+that notice text — and only that field — in the responses of `getSogcByDate`,
+`getSogcPublications` and `getCompanyByUid` / `getCompanyByChid` /
+`getCompanyByEhraid`. Upstream garbles a notice whole, so the repair decides per
+string: when every non-ASCII character is part of a double-encoded sequence it
+repairs them all (including `−`, `→`, Cyrillic, combining marks); when correct
+accented text sits next to garbled text it repairs only `Ã`/`Å`-led letters
+(`RøjkjÃ¦r`, `KriÅ¡to`); correct text such as `«CAFÉ»`, `„Fuß“` or `PERCHÈ»`
+passes through unchanged. It is idempotent. The repair runs on JSON responses
+(the default `parseAs`). A `responseTransformer` — passed to the call or set on
+the client the call uses — runs after the repair. To receive the upstream text verbatim
+(process-wide; a later call without the option keeps your choice; must be a
+boolean):
+
+```typescript
+configureClient({ auth, repairEncoding: false });
+```
+
+The repair is also available standalone, e.g. for text you stored earlier:
+
+```typescript
+import { fixDoubleEncodedUtf8, repairSogcMessages } from '@tenderlift/zefix-client/text';
+
+fixDoubleEncodedUtf8('GraubÃ¼nden, gemÃ¤ÃŸ'); // 'Graubünden, gemäß'
+repairSogcMessages(storedPublications); // copies only the records it changes
+```
+
 ## Troubleshooting
 
 ### Common Issues

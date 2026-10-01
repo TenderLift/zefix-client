@@ -10,6 +10,7 @@ import {
 	showEhraid,
 	showUid,
 } from './generated/sdk.gen';
+import {repairSogcMessages} from './text';
 
 /**
  * Dual-package-hazard guard.
@@ -50,6 +51,64 @@ const resolvedClient = globalScope[SHARED_CLIENT_KEY] ?? generatedClient;
 globalScope[SHARED_CLIENT_KEY] = resolvedClient;
 export const sharedClient = resolvedClient;
 
+/**
+ * Process-wide client settings, pinned on `globalThis` for the same reason as
+ * the client itself: `configureClient()` on one bundle variant must govern SDK
+ * calls resolved through the other.
+ */
+export type SharedSettings = {
+	/** Repair upstream double-encoded UTF-8 in SOGC notice text. Default `true`. */
+	repairEncoding: boolean;
+};
+
+const SHARED_SETTINGS_KEY = Symbol.for(
+	'@tenderlift/zefix-client/shared-settings@1',
+);
+
+const settingsScope = globalThis as typeof globalThis & {
+	[SHARED_SETTINGS_KEY]?: SharedSettings;
+};
+
+// Reuse the object another bundle pinned (so both read one setting), filling in
+// any field an older bundle did not know about.
+const pinnedSettings: Partial<SharedSettings> =
+	settingsScope[SHARED_SETTINGS_KEY] ?? {};
+pinnedSettings.repairEncoding ??= true;
+export const sharedSettings = pinnedSettings as SharedSettings;
+settingsScope[SHARED_SETTINGS_KEY] = sharedSettings;
+
+/**
+ * ZEFIX serves the SOGC notice text double-encoded (`ZÃ¼rich`) on most
+ * publication days since 2026-03-16 — see `text.ts`. The five SDK functions
+ * whose responses carry that text repair it before returning; the repair is
+ * selective, so clean text passes through unchanged. A `responseTransformer`
+ * — passed to the call, or else set on the client the call uses — runs AFTER
+ * the repair, never instead of it. The repair runs on JSON responses (the
+ * default `parseAs`); `parseAs: 'text'` etc. return the upstream body as-is.
+ */
+type TransformerOptions = {
+	responseTransformer?: (data: unknown) => Promise<unknown>;
+};
+
+function withSogcRepair<O>(options: O): O {
+	const callOptions = options as
+		| (TransformerOptions & {client?: typeof sharedClient})
+		| undefined;
+	const callerTransformer =
+		callOptions?.responseTransformer ??
+		((callOptions?.client ?? sharedClient).getConfig() as TransformerOptions)
+			.responseTransformer;
+	return {
+		...options,
+		async responseTransformer(data: unknown) {
+			const repaired = sharedSettings.repairEncoding
+				? repairSogcMessages(data)
+				: data;
+			return callerTransformer ? callerTransformer(repaired) : repaired;
+		},
+	};
+}
+
 // Public SDK functions bound to the shared client. Defaulting `client` to
 // `sharedClient` (rather than the variant-local generated client the raw SDK
 // captures) is what makes `configureClient()` apply across bundle variants. An
@@ -58,13 +117,22 @@ export const searchCompanies = ((options) =>
 	search({client: sharedClient, ...options})) as typeof search;
 
 export const getCompanyByUid = ((options) =>
-	showUid({client: sharedClient, ...options})) as typeof showUid;
+	showUid({
+		client: sharedClient,
+		...withSogcRepair(options),
+	})) as typeof showUid;
 
 export const getCompanyByChid = ((options) =>
-	showChid({client: sharedClient, ...options})) as typeof showChid;
+	showChid({
+		client: sharedClient,
+		...withSogcRepair(options),
+	})) as typeof showChid;
 
 export const getCompanyByEhraid = ((options) =>
-	showEhraid({client: sharedClient, ...options})) as typeof showEhraid;
+	showEhraid({
+		client: sharedClient,
+		...withSogcRepair(options),
+	})) as typeof showEhraid;
 
 export const getLegalForms = ((options) =>
 	list1({client: sharedClient, ...options})) as typeof list1;
@@ -79,7 +147,13 @@ export const getRegistryByBfsCommunityId = ((options) =>
 	})) as typeof byBfsCommunityId;
 
 export const getSogcByDate = ((options) =>
-	byDate({client: sharedClient, ...options})) as typeof byDate;
+	byDate({
+		client: sharedClient,
+		...withSogcRepair(options),
+	})) as typeof byDate;
 
 export const getSogcPublications = ((options) =>
-	get({client: sharedClient, ...options})) as typeof get;
+	get({
+		client: sharedClient,
+		...withSogcRepair(options),
+	})) as typeof get;

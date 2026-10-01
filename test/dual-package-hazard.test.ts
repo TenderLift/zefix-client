@@ -20,9 +20,13 @@ import {beforeAll, describe, expect, it} from 'vitest';
 type ZefixApi = {
 	client: unknown;
 	configureClient: (config: {
-		auth: {username: string; password: string};
+		auth?: {username: string; password: string};
 		customFetch: typeof fetch;
+		repairEncoding?: boolean;
 	}) => unknown;
+	getSogcByDate: (options: {
+		path: {date: string};
+	}) => Promise<{data?: Array<{sogcPublication?: {message?: string}}>}>;
 	searchCompanies: (options: {
 		body: {name: string; canton: string; activeOnly: boolean};
 	}) => Promise<unknown>;
@@ -85,5 +89,24 @@ describe('dual-package hazard', () => {
 
 		expect(seenAuthHeaders).toHaveLength(1);
 		expect(seenAuthHeaders[0]).toMatch(/^Basic /);
+	});
+
+	it('repairEncoding set on one build governs SDK calls resolved through the other', async () => {
+		const esm = await loadEsm();
+		const cjs = loadCjs();
+		const garbled = 'in ZÃ¼rich';
+		const fakeFetch: typeof fetch = async () =>
+			new Response(JSON.stringify([{sogcPublication: {message: garbled}}]), {
+				status: 200,
+				headers: {'Content-Type': 'application/json'},
+			});
+
+		cjs.configureClient({customFetch: fakeFetch, repairEncoding: false});
+		const verbatim = await esm.getSogcByDate({path: {date: '2026-09-29'}});
+		expect(verbatim.data?.[0]?.sogcPublication?.message).toBe(garbled);
+
+		cjs.configureClient({customFetch: fakeFetch, repairEncoding: true});
+		const repaired = await esm.getSogcByDate({path: {date: '2026-09-29'}});
+		expect(repaired.data?.[0]?.sogcPublication?.message).toBe('in Zürich');
 	});
 });

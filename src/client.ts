@@ -10,6 +10,7 @@ import {
 	getSogcByDate as getSogcByDateSdk,
 	getSogcPublications as getSogcPublicationsSdk,
 	searchCompanies as searchCompaniesSdk,
+	sharedSettings,
 } from './shared-client';
 import {toBase64} from './utils/node-or-worker';
 
@@ -23,6 +24,12 @@ export type ClientConfig = {
 	auth?: Auth;
 	throttle?: {minIntervalMs?: number};
 	customFetch?: typeof fetch;
+	/**
+	 * Repair the double-encoded UTF-8 ZEFIX serves in SOGC notice text
+	 * (`ZÃ¼rich` → `Zürich`). Process-wide; default `true`. Set `false` to
+	 * receive the upstream text verbatim. Omitting it keeps the current value.
+	 */
+	repairEncoding?: boolean;
 };
 
 export class ZefixApiClient {
@@ -38,6 +45,16 @@ export class ZefixApiClient {
 			);
 		}
 
+		// Validate before any process-wide side effect (setConfig below).
+		if (
+			config.repairEncoding !== undefined &&
+			typeof config.repairEncoding !== 'boolean'
+		) {
+			throw new TypeError(
+				`ZEFIX API Client Error: repairEncoding must be a boolean, got ${typeof config.repairEncoding}.`,
+			);
+		}
+
 		const clientConfig: Partial<GeneratedClientConfig> = {
 			baseUrl: config.baseUrl ?? 'https://www.zefix.admin.ch/ZefixPublicREST',
 		};
@@ -46,6 +63,11 @@ export class ZefixApiClient {
 		}
 
 		client.setConfig(clientConfig);
+		// Only an explicit value changes the process-wide setting, so a later
+		// `getClient()` / `new ZefixApiClient()` cannot silently undo an opt-out.
+		if (config.repairEncoding !== undefined) {
+			sharedSettings.repairEncoding = config.repairEncoding;
+		}
 
 		client.interceptors.request.use(async (req: Request) => {
 			const headers = new Headers(req.headers);
