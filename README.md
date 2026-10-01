@@ -304,9 +304,13 @@ address, purpose) are not. Consumers that read the seat out of the notice text b
 name lose non-ASCII municipalities on those days.
 
 Nothing is lost upstream, so the repair is exact. Since 1.1.0 the client repairs
-every response string by default; the repair is selective (only runs that form
-valid UTF-8 once mapped back through Windows-1252) and idempotent, so clean text
-passes through unchanged. To receive the upstream text verbatim:
+that notice text — and only that field — in the responses of `getSogcByDate`,
+`getSogcPublications` and `getCompanyByUid` / `getCompanyByChid` /
+`getCompanyByEhraid`. The repair works per UTF-8 sequence and accepts only what a
+double-encoding plausibly produced, so correct text such as `«CAFÉ»` or `„Fuß“`
+passes through unchanged and a second pass is a no-op. A `responseTransformer`
+you pass runs after the repair. To receive the upstream text verbatim
+(process-wide; omitting the option later keeps your choice):
 
 ```typescript
 configureClient({ auth, repairEncoding: false });
@@ -315,9 +319,10 @@ configureClient({ auth, repairEncoding: false });
 The repair is also available standalone, e.g. for text you stored earlier:
 
 ```typescript
-import { fixDoubleEncodedUtf8, looksDoubleEncoded } from '@tenderlift/zefix-client/text';
+import { fixDoubleEncodedUtf8, repairSogcMessages } from '@tenderlift/zefix-client/text';
 
 fixDoubleEncodedUtf8('GraubÃ¼nden, gemÃ¤ÃŸ'); // 'Graubünden, gemäß'
+repairSogcMessages(storedPublications); // copies only the records it changes
 ```
 
 ## Troubleshooting

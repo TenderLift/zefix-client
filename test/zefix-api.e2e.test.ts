@@ -8,6 +8,7 @@ import {
 	looksDoubleEncoded,
 	searchCompanies,
 } from '../src';
+import {RESIDUAL} from './residual';
 
 dotenv.config();
 
@@ -478,6 +479,8 @@ describe('ZEFIX API Client E2E Tests - Production', () => {
 				(row) => row.sogcPublication?.message ?? '',
 			);
 			expect(messages.length).toBeGreaterThan(100);
+			// Independent residual check (not defined via the repair itself).
+			expect(messages.filter((m) => RESIDUAL.test(m))).toEqual([]);
 			expect(messages.filter((m) => looksDoubleEncoded(m))).toEqual([]);
 			expect(messages.some((m) => /[äöüéèà]/.test(m))).toBe(true);
 		});

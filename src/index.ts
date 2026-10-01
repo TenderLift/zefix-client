@@ -22,7 +22,7 @@ export {
 export {
 	fixDoubleEncodedUtf8,
 	looksDoubleEncoded,
-	repairStringsDeep,
+	repairSogcMessages,
 } from './text';
 export {ensureOk, ZefixError} from './utils/errors';
 export {toBase64} from './utils/node-or-worker';

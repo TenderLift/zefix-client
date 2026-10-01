@@ -105,7 +105,7 @@ describe('dual-package hazard', () => {
 		const verbatim = await esm.getSogcByDate({path: {date: '2026-09-29'}});
 		expect(verbatim.data?.[0]?.sogcPublication?.message).toBe(garbled);
 
-		cjs.configureClient({customFetch: fakeFetch});
+		cjs.configureClient({customFetch: fakeFetch, repairEncoding: true});
 		const repaired = await esm.getSogcByDate({path: {date: '2026-09-29'}});
 		expect(repaired.data?.[0]?.sogcPublication?.message).toBe('in Zürich');
 	});

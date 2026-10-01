@@ -26,8 +26,8 @@ export type ClientConfig = {
 	customFetch?: typeof fetch;
 	/**
 	 * Repair the double-encoded UTF-8 ZEFIX serves in SOGC notice text
-	 * (`ZÃ¼rich` → `Zürich`). Selective and idempotent; default `true`. Set
-	 * `false` to receive the upstream text verbatim.
+	 * (`ZÃ¼rich` → `Zürich`). Process-wide; default `true`. Set `false` to
+	 * receive the upstream text verbatim. Omitting it keeps the current value.
 	 */
 	repairEncoding?: boolean;
 };
@@ -53,7 +53,11 @@ export class ZefixApiClient {
 		}
 
 		client.setConfig(clientConfig);
-		sharedSettings.repairEncoding = config.repairEncoding ?? true;
+		// Only an explicit value changes the process-wide setting, so a later
+		// `getClient()` / `new ZefixApiClient()` cannot silently undo an opt-out.
+		if (config.repairEncoding !== undefined) {
+			sharedSettings.repairEncoding = config.repairEncoding;
+		}
 
 		client.interceptors.request.use(async (req: Request) => {
 			const headers = new Headers(req.headers);

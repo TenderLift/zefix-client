@@ -7,6 +7,7 @@ import {
 	looksDoubleEncoded,
 	type SogcPublicationAndCompanyShort,
 } from '../src';
+import {RESIDUAL} from './residual';
 
 /**
  * Four records served verbatim by `GET /api/v1/sogc/bydate/2026-09-29` on
@@ -32,7 +33,7 @@ const messages = (rows: SogcPublicationAndCompanyShort[] | undefined) =>
 	(rows ?? []).map((row) => row.sogcPublication?.message ?? '');
 
 afterEach(() => {
-	configureClient();
+	configureClient({repairEncoding: true});
 });
 
 describe('SOGC encoding repair', () => {
@@ -40,6 +41,7 @@ describe('SOGC encoding repair', () => {
 		expect(
 			messages(upstream).filter((m) => looksDoubleEncoded(m)),
 		).toHaveLength(3);
+		expect(messages(upstream).filter((m) => RESIDUAL.test(m))).toHaveLength(3);
 	});
 
 	it('getSogcByDate repairs the notice text by default', async () => {
@@ -47,7 +49,7 @@ describe('SOGC encoding repair', () => {
 		const {data} = await getSogcByDate({path: {date: '2026-09-29'}});
 		const out = messages(data);
 
-		expect(out.some((m) => looksDoubleEncoded(m))).toBe(false);
+		expect(out.filter((m) => RESIDUAL.test(m))).toEqual([]);
 		expect(out[0]).toContain('dänischer Staatsangehöriger');
 		expect(out[1]).toContain('360 IA Sàrl</FT>, à <FT TYPE="S">Ormont-Dessus');
 		expect(out[2]).toMatch(/[ÜßÄÖ]/);
@@ -76,12 +78,35 @@ describe('SOGC encoding repair', () => {
 		expect(data?.[0]?.sogcPub?.[0]?.message).toContain('dänischer');
 	});
 
-	it('a caller-supplied responseTransformer wins', async () => {
+	it('a caller-supplied responseTransformer runs after the repair', async () => {
+		configureClient({customFetch: serve(upstream)});
+		const seen: string[] = [];
+		const {data} = await getSogcByDate({
+			path: {date: '2026-09-29'},
+			async responseTransformer(raw) {
+				seen.push(...messages(raw as SogcPublicationAndCompanyShort[]));
+				return raw;
+			},
+		});
+
+		expect(seen[0]).toContain('dänischer');
+		expect(messages(data)[0]).toContain('dänischer');
+	});
+
+	it('an explicit responseTransformer: undefined keeps the repair', async () => {
 		configureClient({customFetch: serve(upstream)});
 		const {data} = await getSogcByDate({
 			path: {date: '2026-09-29'},
-			responseTransformer: async (raw) => raw,
+			responseTransformer: undefined,
 		});
+
+		expect(messages(data)[0]).toContain('dänischer');
+	});
+
+	it('a later configureClient() without the option keeps an opt-out', async () => {
+		configureClient({customFetch: serve(upstream), repairEncoding: false});
+		configureClient({customFetch: serve(upstream)});
+		const {data} = await getSogcByDate({path: {date: '2026-09-29'}});
 
 		expect(messages(data)).toEqual(messages(upstream));
 	});

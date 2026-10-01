@@ -10,7 +10,7 @@ import {
 	showEhraid,
 	showUid,
 } from './generated/sdk.gen';
-import {repairStringsDeep} from './text';
+import {repairSogcMessages} from './text';
 
 /**
  * Dual-package-hazard guard.
@@ -57,7 +57,7 @@ export const sharedClient = resolvedClient;
  * calls resolved through the other.
  */
 export type SharedSettings = {
-	/** Repair upstream double-encoded UTF-8 in response strings. Default `true`. */
+	/** Repair upstream double-encoded UTF-8 in SOGC notice text. Default `true`. */
 	repairEncoding: boolean;
 };
 
@@ -76,13 +76,27 @@ settingsScope[SHARED_SETTINGS_KEY] = sharedSettings;
 
 /**
  * ZEFIX serves the SOGC notice text double-encoded (`ZÃ¼rich`) on most
- * publication days since 2026-03-16 — see `text.ts`. Every SDK function below
- * repairs its parsed response through this transformer; the repair is
- * selective and idempotent, so clean responses pass through unchanged. A
- * caller-supplied `responseTransformer` still wins (spread last).
+ * publication days since 2026-03-16 — see `text.ts`. The five SDK functions
+ * whose responses carry that text repair it before returning; the repair is
+ * selective, so clean text passes through unchanged. A caller-supplied
+ * `responseTransformer` runs AFTER the repair, never instead of it.
  */
-async function repairEncoding(data: unknown): Promise<unknown> {
-	return sharedSettings.repairEncoding ? repairStringsDeep(data) : data;
+type TransformerOptions = {
+	responseTransformer?: (data: unknown) => Promise<unknown>;
+};
+
+function withSogcRepair<O>(options: O): O {
+	const callerTransformer = (options as TransformerOptions | undefined)
+		?.responseTransformer;
+	return {
+		...options,
+		async responseTransformer(data: unknown) {
+			const repaired = sharedSettings.repairEncoding
+				? repairSogcMessages(data)
+				: data;
+			return callerTransformer ? callerTransformer(repaired) : repaired;
+		},
+	};
 }
 
 // Public SDK functions bound to the shared client. Defaulting `client` to
@@ -90,64 +104,46 @@ async function repairEncoding(data: unknown): Promise<unknown> {
 // captures) is what makes `configureClient()` apply across bundle variants. An
 // explicit `options.client` still wins because it is spread last.
 export const searchCompanies = ((options) =>
-	search({
-		client: sharedClient,
-		responseTransformer: repairEncoding,
-		...options,
-	})) as typeof search;
+	search({client: sharedClient, ...options})) as typeof search;
 
 export const getCompanyByUid = ((options) =>
 	showUid({
 		client: sharedClient,
-		responseTransformer: repairEncoding,
-		...options,
+		...withSogcRepair(options),
 	})) as typeof showUid;
 
 export const getCompanyByChid = ((options) =>
 	showChid({
 		client: sharedClient,
-		responseTransformer: repairEncoding,
-		...options,
+		...withSogcRepair(options),
 	})) as typeof showChid;
 
 export const getCompanyByEhraid = ((options) =>
 	showEhraid({
 		client: sharedClient,
-		responseTransformer: repairEncoding,
-		...options,
+		...withSogcRepair(options),
 	})) as typeof showEhraid;
 
 export const getLegalForms = ((options) =>
-	list1({
-		client: sharedClient,
-		responseTransformer: repairEncoding,
-		...options,
-	})) as typeof list1;
+	list1({client: sharedClient, ...options})) as typeof list1;
 
 export const getCommunities = ((options) =>
-	list2({
-		client: sharedClient,
-		responseTransformer: repairEncoding,
-		...options,
-	})) as typeof list2;
+	list2({client: sharedClient, ...options})) as typeof list2;
 
 export const getRegistryByBfsCommunityId = ((options) =>
 	byBfsCommunityId({
 		client: sharedClient,
-		responseTransformer: repairEncoding,
 		...options,
 	})) as typeof byBfsCommunityId;
 
 export const getSogcByDate = ((options) =>
 	byDate({
 		client: sharedClient,
-		responseTransformer: repairEncoding,
-		...options,
+		...withSogcRepair(options),
 	})) as typeof byDate;
 
 export const getSogcPublications = ((options) =>
 	get({
 		client: sharedClient,
-		responseTransformer: repairEncoding,
-		...options,
+		...withSogcRepair(options),
 	})) as typeof get;

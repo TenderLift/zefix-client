@@ -1,5 +1,5 @@
 /**
- * Repair for double-encoded UTF-8 ("mojibake") in ZEFIX responses.
+ * Repair for double-encoded UTF-8 ("mojibake") in ZEFIX SOGC notice text.
  *
  * Since 2026-03-16 the ZEFIX PublicREST API serves the SOGC notice text
  * (`sogcPublication.message`, and the same text in `CompanyFull.sogcPub[]`)
@@ -7,34 +7,36 @@
  * as Windows-1252 and re-encoded as UTF-8, so `ü` (bytes `C3 BC`) arrives as
  * the two characters `Ã¼`. The wire bytes are valid UTF-8 and the response is
  * plain `application/json`, so no decoder can catch it. Whole publication days
- * are affected or not (an upstream import-batch property); structured fields
- * (`name`, `legalSeat`, `legalSeatId`, address, purpose) are not affected.
- * Nothing is lost upstream — no U+FFFD, the NBSP of `à` (`C3 A0`) survives — so
- * the repair is exact.
+ * are affected or not; structured fields (`name`, `legalSeat`, address,
+ * purpose) are not. Nothing is lost upstream, so the repair is exact.
  *
- * The misdecode is Windows-1252, not pure Latin-1: for bytes 0xA0–0xFF the two
- * agree (`ü`, `é`, `à`), but bytes 0x80–0x9F — the second byte of `ß`, `Ä`,
- * `Ö`, `Ü` and of `—`/`’` — become CP1252 "smart" characters outside U+0080–
- * U+00FF (`Ü` → `Ãœ`, `—` → `â€”`). A Latin-1-only repair misses those.
+ * The misdecode is Windows-1252, not Latin-1: a continuation byte in 0x80–0x9F
+ * becomes a CP1252 "smart" character (`Ü` → `Ãœ`, `ß` → `ÃŸ`, `—` → `â€”`).
  *
- * The repair is SELECTIVE: only maximal runs of CP1252-decodable characters
- * that strict-decode as UTF-8 are reinterpreted, so clean text, genuinely
- * single-encoded characters and mixed strings (`Røjkjær` with only `æ`
- * double-encoded) pass through. It is idempotent.
+ * The repair works per UTF-8 SEQUENCE (lead char + continuation chars) and only
+ * accepts what a double-encoding plausibly produced, because an innocent pair of
+ * correct characters can also form valid UTF-8 (`É»` = C9 BB = `ɻ`, `ß“` =
+ * DF 93 = `ߓ`):
  *
- * Pure and dependency-free (`TextDecoder` + `Uint8Array` only) — safe in
- * Node.js, Workers and browsers.
+ *  - lead `Â`/`Ã` (C2/C3) → U+00A0–U+00FF. Always accepted: "strong" evidence.
+ *  - 3-byte lead (`à`…`ï`) → accepted only into General Punctuation, currency,
+ *    letterlike symbols or Latin Extended Additional (Vietnamese). Strong.
+ *  - any other 2-byte lead (`Ä`…`ß`) → accepted only into Latin Extended-A/B
+ *    (`ł`, `š`, `ğ`, `ș`) AND only when the same string has strong evidence.
+ *    A clean `«SPÄ»` stays put; `Ã¤ … Å‚` repairs both.
+ *  - 4-byte sequences are never accepted.
+ *
+ * A clean string therefore passes through unchanged, and the output of a repair
+ * is a fixed point (its strong evidence is gone, so a second pass changes
+ * nothing). Pure (`TextDecoder` + `Uint8Array`) — safe in Node.js, Workers and
+ * browsers.
  *
  * @module text
  */
 
 const STRICT_UTF8 = new TextDecoder('utf-8', {fatal: true});
 
-/**
- * Windows-1252 0x80–0x9F "smart" characters → their byte value. The 5
- * undefined CP1252 bytes (0x81, 0x8D, 0x8F, 0x90, 0x9D) pass through as
- * U+0081… and are covered by the U+0080–U+00FF range in `runByte`.
- */
+/** Windows-1252 0x80–0x9F "smart" characters → their byte value. */
 const CP1252_SPECIAL_TO_BYTE = new Map<number, number>([
 	[0x20_ac, 0x80],
 	[0x20_1a, 0x82],
@@ -65,23 +67,68 @@ const CP1252_SPECIAL_TO_BYTE = new Map<number, number>([
 	[0x01_78, 0x9f],
 ]);
 
-/** The CP1252 byte a character stands for, or `undefined` if it cannot be one. */
-function runByte(code: number): number | undefined {
-	if (code >= 0x80 && code <= 0xff) {
-		return code;
-	}
-
-	return CP1252_SPECIAL_TO_BYTE.get(code);
+/** The byte a misdecoded character stands for (U+0080–U+00FF map to themselves). */
+function toByte(char: string): number {
+	const code = char.codePointAt(0)!;
+	return code <= 0xff ? code : CP1252_SPECIAL_TO_BYTE.get(code)!;
 }
 
-function hasCandidateByte(text: string): boolean {
-	for (let i = 0; i < text.length; i++) {
-		if (runByte(text.codePointAt(i)!) !== undefined) {
-			return true;
+/** A continuation byte 0x80–0xBF as it appears after a CP1252 misdecode. */
+const CONTINUATION = `[\\u0080-\\u00BF${[...CP1252_SPECIAL_TO_BYTE.keys()]
+	.map((code) => `\\u${code.toString(16).padStart(4, '0')}`)
+	.join('')}]`;
+
+const SEQUENCE = new RegExp(
+	`[\\u00C2-\\u00DF]${CONTINUATION}|[\\u00E0-\\u00EF]${CONTINUATION}{2}`,
+	'g',
+);
+const CANDIDATE_LEAD = /[Â-ï]/;
+
+type Evidence = 'strong' | 'weak' | undefined;
+
+function classify(lead: number, decoded: number): Evidence {
+	if (lead <= 0xc3) {
+		return decoded >= 0xa0 ? 'strong' : undefined;
+	}
+
+	if (lead <= 0xdf) {
+		return decoded <= 0x02_4f ? 'weak' : undefined;
+	}
+
+	const plausible =
+		(decoded >= 0x1e_00 && decoded <= 0x1e_ff) || // Latin Extended Additional
+		(decoded >= 0x20_00 && decoded <= 0x20_6f) || // General Punctuation
+		(decoded >= 0x20_a0 && decoded <= 0x20_cf) || // Currency Symbols
+		(decoded >= 0x21_00 && decoded <= 0x21_4f); // Letterlike Symbols
+	return plausible ? 'strong' : undefined;
+}
+
+type Fix = {index: number; length: number; value: string; evidence: Evidence};
+
+function findFixes(text: string): Fix[] {
+	const fixes: Fix[] = [];
+	for (const match of text.matchAll(SEQUENCE)) {
+		const chars = [...match[0]];
+		const bytes = Uint8Array.from(chars, (char) => toByte(char));
+		let value: string;
+		try {
+			value = STRICT_UTF8.decode(bytes);
+		} catch {
+			continue;
+		}
+
+		const evidence = classify(bytes[0], value.codePointAt(0)!);
+		if (evidence) {
+			fixes.push({
+				index: match.index,
+				length: match[0].length,
+				value,
+				evidence,
+			});
 		}
 	}
 
-	return false;
+	return fixes;
 }
 
 /**
@@ -90,80 +137,87 @@ function hasCandidateByte(text: string): boolean {
  * repair, so it is cheap to call on every string.
  */
 export function fixDoubleEncodedUtf8(text: string): string {
-	if (!hasCandidateByte(text)) {
+	if (!CANDIDATE_LEAD.test(text)) {
 		return text;
 	}
 
+	const fixes = findFixes(text);
+	const strong = fixes.some((fix) => fix.evidence === 'strong');
 	let out = '';
-	let i = 0;
-	const n = text.length;
-
-	while (i < n) {
-		const startByte = runByte(text.codePointAt(i)!);
-		if (startByte === undefined) {
-			out += text[i];
-			i++;
+	let cursor = 0;
+	for (const fix of fixes) {
+		if (fix.evidence === 'weak' && !strong) {
 			continue;
 		}
 
-		// Gather the maximal run of CP1252-decodable characters, reinterpret the
-		// code points as raw bytes and strict-decode them as UTF-8.
-		const bytes: number[] = [startByte];
-		let j = i + 1;
-		while (j < n) {
-			const b = runByte(text.codePointAt(j)!);
-			if (b === undefined) {
-				break;
-			}
+		out += text.slice(cursor, fix.index) + fix.value;
+		cursor = fix.index + fix.length;
+	}
 
-			bytes.push(b);
-			j++;
+	return cursor === 0 ? text : out + text.slice(cursor);
+}
+
+/** True iff `fixDoubleEncodedUtf8` would change `text`. */
+export function looksDoubleEncoded(text: string): boolean {
+	return fixDoubleEncodedUtf8(text) !== text;
+}
+
+type SogcPublicationLike = {message?: unknown};
+type ResponseItem = {
+	sogcPublication?: SogcPublicationLike;
+	sogcPub?: unknown;
+};
+
+function repairPublication<T>(publication: T): T {
+	const message = (publication as SogcPublicationLike | undefined)?.message;
+	if (typeof message !== 'string') {
+		return publication;
+	}
+
+	const fixed = fixDoubleEncodedUtf8(message);
+	return fixed === message ? publication : {...publication, message: fixed};
+}
+
+function repairItem<T>(item: T): T {
+	if (typeof item !== 'object' || item === null) {
+		return item;
+	}
+
+	const {sogcPublication, sogcPub} = item as ResponseItem;
+	let out = item;
+	if (sogcPublication) {
+		const repaired = repairPublication(sogcPublication);
+		if (repaired !== sogcPublication) {
+			out = {...out, sogcPublication: repaired};
 		}
+	}
 
-		// Keep the run as-is unless it decodes cleanly (e.g. a lone valid `ø`).
-		let repaired: string | undefined;
-		try {
-			repaired = STRICT_UTF8.decode(new Uint8Array(bytes));
-		} catch {
-			repaired = undefined;
+	if (Array.isArray(sogcPub)) {
+		const repaired = sogcPub.map((publication) =>
+			repairPublication(publication),
+		);
+		if (repaired.some((publication, i) => publication !== sogcPub[i])) {
+			out = {...out, sogcPub: repaired};
 		}
-
-		out += repaired ?? text.slice(i, j);
-		i = j;
 	}
 
 	return out;
 }
 
-/** True iff `text` contains a repairable double-encoding. */
-export function looksDoubleEncoded(text: string): boolean {
-	return fixDoubleEncodedUtf8(text) !== text;
-}
-
 /**
- * Return `value` with `fixDoubleEncodedUtf8` applied to every string inside it
- * (objects and arrays are walked; other values pass through). Mutates in place
- * and returns the same reference — response bodies are freshly parsed JSON.
+ * Repair the SOGC notice text in a ZEFIX response or stored record — the only
+ * field the upstream defect touches: `sogcPublication.message` (SOGC endpoints,
+ * `SogcPublicationAndCompanyShort`) and `sogcPub[].message` (company endpoints,
+ * `CompanyFull`). Accepts one record or an array of them. Never mutates its
+ * input: changed records are copied, untouched ones returned as-is.
  */
-export function repairStringsDeep<T>(value: T): T {
-	if (typeof value === 'string') {
-		return fixDoubleEncodedUtf8(value) as T;
+export function repairSogcMessages<T>(data: T): T {
+	if (Array.isArray(data)) {
+		const repaired = data.map((item: unknown) => repairItem(item));
+		return (
+			repaired.some((item, i) => item !== data[i]) ? repaired : data
+		) as T;
 	}
 
-	if (Array.isArray(value)) {
-		for (let i = 0; i < value.length; i++) {
-			value[i] = repairStringsDeep(value[i]) as unknown;
-		}
-
-		return value;
-	}
-
-	if (typeof value === 'object' && value !== null) {
-		const record = value as Record<string, unknown>;
-		for (const key of Object.keys(record)) {
-			record[key] = repairStringsDeep(record[key]);
-		}
-	}
-
-	return value;
+	return repairItem(data);
 }
