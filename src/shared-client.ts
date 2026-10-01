@@ -82,17 +82,22 @@ settingsScope[SHARED_SETTINGS_KEY] = sharedSettings;
  * publication days since 2026-03-16 — see `text.ts`. The five SDK functions
  * whose responses carry that text repair it before returning; the repair is
  * selective, so clean text passes through unchanged. A `responseTransformer`
- * — passed to the call, or else set on the client via `client.setConfig()` —
- * runs AFTER the repair, never instead of it.
+ * — passed to the call, or else set on the client the call uses — runs AFTER
+ * the repair, never instead of it. The repair runs on JSON responses (the
+ * default `parseAs`); `parseAs: 'text'` etc. return the upstream body as-is.
  */
 type TransformerOptions = {
 	responseTransformer?: (data: unknown) => Promise<unknown>;
 };
 
 function withSogcRepair<O>(options: O): O {
+	const callOptions = options as
+		| (TransformerOptions & {client?: typeof sharedClient})
+		| undefined;
 	const callerTransformer =
-		(options as TransformerOptions | undefined)?.responseTransformer ??
-		(sharedClient.getConfig() as TransformerOptions).responseTransformer;
+		callOptions?.responseTransformer ??
+		((callOptions?.client ?? sharedClient).getConfig() as TransformerOptions)
+			.responseTransformer;
 	return {
 		...options,
 		async responseTransformer(data: unknown) {

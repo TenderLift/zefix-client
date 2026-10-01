@@ -309,10 +309,11 @@ that notice text — and only that field — in the responses of `getSogcByDate`
 `getCompanyByEhraid`. Upstream garbles a notice whole, so the repair decides per
 string: when every non-ASCII character is part of a double-encoded sequence it
 repairs them all (including `−`, `→`, Cyrillic, combining marks); when correct
-accented text sits next to garbled text it repairs only the unambiguous
-sequences; correct text such as `«CAFÉ»` or `„Fuß“` passes through unchanged.
-It is idempotent. A `responseTransformer` — passed to the call or set on the
-client — runs after the repair. To receive the upstream text verbatim
+accented text sits next to garbled text it repairs only `Ã`/`Å`-led letters
+(`RøjkjÃ¦r`, `KriÅ¡to`); correct text such as `«CAFÉ»`, `„Fuß“` or `PERCHÈ»`
+passes through unchanged. It is idempotent. The repair runs on JSON responses
+(the default `parseAs`). A `responseTransformer` — passed to the call or set on
+the client the call uses — runs after the repair. To receive the upstream text verbatim
 (process-wide; a later call without the option keeps your choice; must be a
 boolean):
 

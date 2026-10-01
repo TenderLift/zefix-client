@@ -98,7 +98,7 @@
     },
     {
       "path": "dist/text.js",
-      "limit": "1 KB"
+      "limit": "1.5 KB"
     }
   ],
   "tsd": {

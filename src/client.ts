@@ -45,6 +45,16 @@ export class ZefixApiClient {
 			);
 		}
 
+		// Validate before any process-wide side effect (setConfig below).
+		if (
+			config.repairEncoding !== undefined &&
+			typeof config.repairEncoding !== 'boolean'
+		) {
+			throw new TypeError(
+				`ZEFIX API Client Error: repairEncoding must be a boolean, got ${typeof config.repairEncoding}.`,
+			);
+		}
+
 		const clientConfig: Partial<GeneratedClientConfig> = {
 			baseUrl: config.baseUrl ?? 'https://www.zefix.admin.ch/ZefixPublicREST',
 		};
@@ -56,12 +66,6 @@ export class ZefixApiClient {
 		// Only an explicit value changes the process-wide setting, so a later
 		// `getClient()` / `new ZefixApiClient()` cannot silently undo an opt-out.
 		if (config.repairEncoding !== undefined) {
-			if (typeof config.repairEncoding !== 'boolean') {
-				throw new TypeError(
-					`ZEFIX API Client Error: repairEncoding must be a boolean, got ${typeof config.repairEncoding}.`,
-				);
-			}
-
 			sharedSettings.repairEncoding = config.repairEncoding;
 		}
 

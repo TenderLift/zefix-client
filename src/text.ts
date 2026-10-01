@@ -19,23 +19,25 @@
  * `ß“` = DF 93 = `ߓ`). Upstream garbles a notice WHOLE, so the decision is
  * made per string:
  *
- *  - whole: every non-ASCII character belongs to a valid sequence, and there is
- *    strong evidence (a sequence led by `Â`/`Ã`, or punctuation/currency like
- *    `â€”`) or at least two sequences → every sequence is repaired, including
- *    `âˆ’` (−), `Ð¼` (Cyrillic), `Ì` + `ˆ` (combining marks) and emoji.
- *  - mixed: correct non-ASCII text sits outside the sequences → only the
- *    strong sequences and Latin Extended letters (`Å¡` → `š`, `Ä‡` → `ć`) are
- *    repaired. A letter led by `Ä`/`Æ`/`Ç`/`È`/`É` followed by a double quote
- *    or guillemet (`È»`, `Ä“`, `É»`) is correct text far more often than a
- *    garbled `ē`/`Ȼ`, so `«PERCHÈ» Ã¼` → `«PERCHÈ» ü`. (Mixed strings come
- *    from the source registry itself, which sometimes stores `KriÅ¡to`.)
- *  - otherwise nothing changes: `«CAFÉ»`, `„Fuß“`, `«SPÄ»` are left alone.
+ *  - whole: every non-ASCII character belongs to a valid sequence AND at least
+ *    one is strong evidence (led by `Â`/`Ã` into Latin-1, or a 3-byte
+ *    punctuation/currency sign like `â€”`) → every sequence is repaired,
+ *    including `âˆ’` (−), `Ð¼` (Cyrillic), `Ì` + `ˆ` (combining marks), emoji.
+ *  - mixed: correct non-ASCII text sits outside the sequences (registry-side
+ *    artefacts such as `RøjkjÃ¦r`, `KriÅ¡to`) → only two narrow shapes are
+ *    repaired: `Ã` + continuation → a Latin-1 letter (not before `«`/`»`), and
+ *    `Å` + continuation → a Latin Extended-A letter (`š`, `ł`, `ń`, `ž`; not
+ *    before a quote, no-break space or soft hyphen). A sequence led by
+ *    `Ä`/`Æ`/`Ç`/`È`/`É` is never rewritten in a mixed string — it is correct
+ *    text (`PERCHÈ»`, `CAFFÈ®`, `BESCHÄ`+soft hyphen) far more often than not.
+ *  - otherwise nothing changes: `«CAFÉ»`, `„Fuß“`, `Ä° Ä°` are left alone.
  *
- * The repair loops until its output stops changing (text garbled more than
- * once comes back clean), so `fixDoubleEncodedUtf8` is idempotent. Bytes
- * Windows-1252 leaves undefined (0x81 0x8D 0x8F 0x90 0x9D — in `Á Í Ï Ð Ý`)
- * are repaired when upstream keeps them as C1 controls, as ZEFIX does; text
- * where they became `?` or U+FFFD is lost and left as-is.
+ * The repair runs to a fixed point (every pass shortens the string, so it
+ * terminates): text garbled more than once comes back clean, and
+ * `fixDoubleEncodedUtf8` is idempotent. Bytes Windows-1252 leaves undefined
+ * (0x81 0x8D 0x8F 0x90 0x9D — in `Á Í Ï Ð Ý`) are repaired when upstream
+ * keeps them as C1 controls, as ZEFIX does; text where they became `?` or
+ * U+FFFD is lost and left as-is (none seen in 174,778 notices).
  *
  * Pure (`TextDecoder` + `Uint8Array`) — safe in Node.js, Workers and browsers.
  *
@@ -108,23 +110,19 @@ type Fix = {
 	index: number;
 	length: number;
 	value: string;
-	/** Proves the string is double-encoded (whole-string mode). */
+	/** Proves the string is double-encoded (enables whole-string mode). */
 	strong: boolean;
-	/** Safe to repair even in a mixed string. */
-	safe: boolean;
+	/** Narrow enough to repair even in a mixed string. */
+	safeInMixed: boolean;
 };
 
-/** Closing/opening double quotes and guillemets: what follows `Ä`/`É` in correct text. */
-const QUOTE_AFTER_CAPITAL = new Set([0xab, 0xbb, 0x20_1c, 0x20_1d, 0x20_1e]);
-
-/** A Latin Extended letter, unless it is `Ä`/`Æ`/`Ç`/`È`/`É` before a quote. */
-function isLatinLetter(lead: number, second: number, decoded: number): boolean {
-	if (decoded < 0x1_00 || decoded > 0x2_4f) {
-		return false;
-	}
-
-	return lead === 0xc5 || !QUOTE_AFTER_CAPITAL.has(second);
-}
+/**
+ * After `Å`, the characters that end a correct word (guillemets, closing `”`,
+ * soft hyphen) rather than continue a garbled letter. Deliberately NOT `‚` /
+ * `“` / `„` / NBSP: those are the second byte of `ł` (`Å‚`), `œ` (`Å“`), `ń`
+ * (`Å„`) and `Š` (`Å` + NBSP), all common in registry names.
+ */
+const AFTER_CAPITAL_A_RING = new Set([0xab, 0xad, 0xbb, 0x20_1d]);
 
 /** Strong evidence: only a double-encoding plausibly produces this sequence. */
 function isStrong(lead: number, decoded: number): boolean {
@@ -134,6 +132,25 @@ function isStrong(lead: number, decoded: number): boolean {
 		(decoded >= 0x20_a0 && decoded <= 0x20_cf) || // Currency Symbols
 		(decoded >= 0x21_00 && decoded <= 0x21_4f) // Letterlike Symbols
 	);
+}
+
+function isSafeInMixed(lead: number, second: number, decoded: number): boolean {
+	if (lead === 0xc3) {
+		// À–ÿ except × ÷, and never `Ã«`/`Ã»` (a word ending in Ã before a guillemet).
+		return (
+			second !== 0xab && second !== 0xbb && decoded !== 0xd7 && decoded !== 0xf7
+		);
+	}
+
+	if (lead === 0xc5) {
+		return (
+			decoded >= 0x1_40 &&
+			decoded <= 0x1_7f &&
+			!AFTER_CAPITAL_A_RING.has(second)
+		);
+	}
+
+	return false;
 }
 
 function findFixes(text: string): Fix[] {
@@ -148,17 +165,16 @@ function findFixes(text: string): Fix[] {
 			continue;
 		}
 
-		// A C1 control (U+0080–U+009F) is never strong evidence: it is only ever
-		// an intermediate layer of text garbled more than once (`Â\u0081` → `Ł`).
+		// A C1 control (U+0080–U+009F) is never evidence: it is only ever an
+		// intermediate layer of text garbled more than once (`Â\u0081` → `Ł`).
 		const decoded = value.codePointAt(0)!;
-		const strong = isStrong(bytes[0], decoded);
+		const lead = bytes[0];
 		fixes.push({
 			index: match.index,
 			length: match[0].length,
 			value,
-			strong,
-			safe:
-				strong || isLatinLetter(bytes[0], chars[1].codePointAt(0)!, decoded),
+			strong: isStrong(lead, decoded),
+			safeInMixed: isSafeInMixed(lead, chars[1].codePointAt(0)!, decoded),
 		});
 	}
 
@@ -176,10 +192,9 @@ function repairOnce(text: string): string {
 	}
 
 	const covered = fixes.reduce((sum, fix) => sum + fix.length, 0);
-	const nonAscii = countNonAscii(text);
-	const strong = fixes.filter((fix) => fix.strong).length;
-	const whole = covered === nonAscii && (strong > 0 || fixes.length >= 2);
-	const accepted = whole ? fixes : fixes.filter((fix) => fix.safe);
+	const whole =
+		covered === countNonAscii(text) && fixes.some((fix) => fix.strong);
+	const accepted = whole ? fixes : fixes.filter((fix) => fix.safeInMixed);
 	if (accepted.length === 0) {
 		return text;
 	}
@@ -200,15 +215,13 @@ function repairOnce(text: string): string {
  * repair, so it is cheap to call on every string. Idempotent.
  */
 export function fixDoubleEncodedUtf8(text: string): string {
+	// Every effective pass replaces 2–4 characters with one, so the string gets
+	// strictly shorter and this terminates at a fixed point of `repairOnce`.
 	let current = text;
-	// Each pass peels one layer; three covers any realistic re-encoding chain.
-	for (let pass = 0; pass < 3; pass++) {
-		const next = repairOnce(current);
-		if (next === current) {
-			return current;
-		}
-
+	let next = repairOnce(current);
+	while (next !== current) {
 		current = next;
+		next = repairOnce(current);
 	}
 
 	return current;

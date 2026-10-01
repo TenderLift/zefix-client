@@ -8,6 +8,7 @@ import {
 	looksDoubleEncoded,
 	type SogcPublicationAndCompanyShort,
 } from '../src';
+import {createClient} from '../src/generated/client';
 import {RESIDUAL} from './residual';
 
 /**
@@ -112,10 +113,32 @@ describe('SOGC encoding repair', () => {
 		expect(seen[0]).toContain('dänischer');
 	});
 
-	it('rejects a non-boolean repairEncoding', () => {
+	it('rejects a non-boolean repairEncoding before touching the shared client', () => {
+		const before = client.getConfig().baseUrl;
 		expect(() =>
-			configureClient({repairEncoding: 'false' as unknown as boolean}),
+			configureClient({
+				baseUrl: 'https://staging.invalid',
+				repairEncoding: 'false' as unknown as boolean,
+			}),
 		).toThrow(TypeError);
+		expect(client.getConfig().baseUrl).toBe(before);
+	});
+
+	it("uses the passed client's own responseTransformer", async () => {
+		const own = createClient({
+			baseUrl: 'https://www.zefix.admin.ch/ZefixPublicREST',
+			fetch: serve(upstream),
+		});
+		const seen: string[] = [];
+		own.setConfig({
+			async responseTransformer(raw) {
+				seen.push(...messages(raw as SogcPublicationAndCompanyShort[]));
+				return raw;
+			},
+		});
+		await getSogcByDate({client: own, path: {date: '2026-09-29'}});
+
+		expect(seen[0]).toContain('dänischer');
 	});
 
 	it('an explicit responseTransformer: undefined keeps the repair', async () => {

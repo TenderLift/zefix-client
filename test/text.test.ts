@@ -68,6 +68,15 @@ describe('fixDoubleEncodedUtf8', () => {
 		'„Fuß“',
 		'«SPÄ»',
 		'société»',
+		// Third review round: correct text next to accented capitals / Ã.
+		'« PERCHÈ\u00A0» und Zürich',
+		'«SPÄ\u00A0» Grüße',
+		'CAFFÈ® Bar',
+		'BESCHÄ\u00ADDIGUNG, Zürich',
+		'Firma «SÃ» AG',
+		'Société «Ã»',
+		'Ä° Ä°',
+		'TM ÉÉ Ä°',
 		'broken upstream: �',
 		'',
 	])('does not invent a repair in %j', (text) => {
@@ -102,17 +111,28 @@ describe('fixDoubleEncodedUtf8', () => {
 		expect(fixDoubleEncodedUtf8('RøjkjÃ¦r')).toBe('Røjkjær');
 	});
 
-	it('repairs a Latin Extended letter garbled at the source in clean text', () => {
-		// Registry-side artefacts seen live (2026-06-05 1006668740, 2026-09-10 1006753346).
+	it('repairs registry-side Ã/Å letters in an otherwise clean notice', () => {
+		// Live: 2026-06-05 1006668740 (`KriÅ¡to`), Røjkjær (#5260).
 		expect(fixDoubleEncodedUtf8('KriÅ¡to, Anna, von Zürich')).toBe(
 			'Krišto, Anna, von Zürich',
 		);
-		expect(
-			fixDoubleEncodedUtf8('Sadiki, Å\u00A0eip, von Uzwil — Geschäft'),
-		).toBe('Sadiki, Šeip, von Uzwil — Geschäft');
-		expect(fixDoubleEncodedUtf8('Đorđe: Ä‘ in Zürich')).toBe(
-			'Đorđe: đ in Zürich',
+		expect(fixDoubleEncodedUtf8('Kowalski, Å‚ukasz — Zürich')).toBe(
+			'Kowalski, łukasz — Zürich',
 		);
+		expect(fixDoubleEncodedUtf8('Røjkj\u00C3\u00A6r')).toBe('Røjkjær');
+	});
+
+	it('runs to a true fixed point, however many layers', () => {
+		let garbled = 'Zürich ü, Łódź';
+		for (let layer = 0; layer < 5; layer++) {
+			garbled = doubleEncode(garbled);
+			expect(fixDoubleEncodedUtf8(garbled)).toBe('Zürich ü, Łódź');
+		}
+
+		for (const input of ['ÅÂÂÂ©È', 'ÈÂÂÂ Ãœ', 'Ä–Ã¼']) {
+			const once = fixDoubleEncodedUtf8(input);
+			expect(fixDoubleEncodedUtf8(once)).toBe(once);
+		}
 	});
 
 	it('leaves a source artefact that is not a double-encoding alone', () => {
